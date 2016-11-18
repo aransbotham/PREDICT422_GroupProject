@@ -55,6 +55,7 @@ library(tree)
 library(rpart)
 library(rpart.plot)
 library(gam)
+library(class)
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
@@ -311,17 +312,17 @@ profit.lda1 <- cumsum(14.5*c.valid[order(post.valid.lda1, decreasing=T)]-2)
 plot(profit.lda1) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.lda1) # number of mailings that maximizes profits
 c(n.mail.valid, max(profit.lda1)) # report number of mailings and maximum profit
-# 1329.0 11624.5
+# 1391.0 11631
 
 cutoff.lda1 <- sort(post.valid.lda1, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.lda1 <- ifelse(post.valid.lda1>cutoff.lda1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.lda1, c.valid) # classification table
 #               c.valid
 #chat.valid.lda1   0   1
-#              0 675  14
-#              1 344 985
-# check n.mail.valid = 344+985 = 1329
-# check profit = 14.5*985-2*1329 = 11624.5
+#              0 622  5
+#              1 397 994
+# check n.mail.valid = 397 + 994 = 1391
+# check profit = 14.5*994-2*1391 = 11631
 
 #########################################
 #    MODEL 4: QDA                       #
@@ -360,12 +361,13 @@ table(chat.valid.qda1, c.valid) # classification table
 set.seed(1)
 model.knn1=knn(x.train.std,x.valid.std,c.train,k=1)
 mean(c.valid != model.knn1)
+# [1] 0.2215064
 
 table(model.knn1 ,c.valid)
 #             c.valid
 # model.knn1   0   1
-#          0 737  89
-#          1 282 910
+#          0 732  160
+#          1 287 839
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
 
@@ -373,10 +375,10 @@ profit.knn1 <- cumsum(14.5*c.valid[order(model.knn1, decreasing=T)]-2)
 plot(profit.knn1) # see how profits change as more mailings are made
 
 mean((as.numeric(as.character(model.knn1)) - c.valid)^2)
-# [1] 0.2006938
+# [1] 0.2215064
 
-# check n.mail.valid = 282+910 = 1192
-# check profit = 14.5*910-2*1192 = 10811
+# check n.mail.valid = 287+839 = 1126
+# check profit = 14.5*839-2*1126 = 9913.5
 
 
 #########################################
@@ -394,6 +396,7 @@ mean((as.numeric(as.character(post.valid.tree0[,2])) - c.valid)^2)
 profit.tree0 <- cumsum(14.5*c.valid[order(post.valid.tree0[,2], decreasing=T)]-2)
 plot(profit.tree0) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.tree0)
+# [1] 1362
 
 cutoff.tree0 <- sort(post.valid.tree0[,2], decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.tree0 <- ifelse(post.valid.tree0[,2] > cutoff.tree0, 1, 0) # mail to everyone above the cutoff
@@ -405,6 +408,8 @@ table(chat.valid.tree0, c.valid) # classification table
 #                1 352 967
 
 # check n.mail.valid = 352+967 = 1319
+##I have noticed that with trees, since groups of observations are less than a given point
+#### this won't align with the actual n.mail.valid
 # check profit = 14.5*967-2*1319 = 11383.5
 
 model.tree1.cv =cv.tree(model.tree1 ,FUN=prune.misclass )
@@ -451,6 +456,7 @@ model.boost1 =gbm(donr~.,data=data.train.std.c, distribution="gaussian",n.trees 
 post.valid.boost1 = predict(model.boost1,newdata = data.valid.std.c,n.trees =5000)
 
 mean((post.valid.boost1 - c.valid)^2)
+# [1] 0.1214981
 
 model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
              mtry=13, ntree =25)
@@ -458,7 +464,7 @@ model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
 post.valid.RF1 = predict(model.RF1,newdata = data.valid.std.c)
 
 mean((as.numeric(as.character(post.valid.RF1)) - c.valid)^2)
-# [1] 0.1184341
+# [1]  0.1154609
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
 
@@ -469,24 +475,26 @@ plot(profit.RF1) # see how profits change as more mailings are made
 table(post.valid.RF1,c.valid)
                 # c.valid
 # post.valid.RF1   0   1
-             # 0 883 103
-             # 1 136 896
+             # 0 887 101
+             # 1 132 898
 
 
-# check n.mail.valid = 136+896 = 1032
-# check profit = 14.5*896-2*1032 = 10928
+# check n.mail.valid = 132+898 = 1030
+# check profit = 14.5*898-2*1030 = 10961
 
 
 # Results
 
 # n.mail Profit  Model
-# 1329   11624.5 LDA1
-# 1343   11640 Log1
+# 1391   11631   LDA1
+# 1343   11640   Log1
 # 1446   11419.5 GAM1
 # 1369   11341.5 QDA
-# 1192   10811   KNN
+# 1126   9913.5  KNN
 # 1319   11383.5 Unaltered Tree
-# 1032   10928   RF
+# 1030   10961   RF
+
+##Logistic is the best!  Most profit.
 
 #########################################################################################
 #Question 3 -- Prediction Models for DAMT                                               #
