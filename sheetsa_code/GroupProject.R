@@ -36,6 +36,8 @@
 
 setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422_GroupProject")
 
+set.seed(1)
+
 #Install Packages
 library(doBy)
 library(psych)
@@ -52,6 +54,7 @@ library(gbm)
 library(tree)
 library(rpart)
 library(rpart.plot)
+library(gam)
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
@@ -126,6 +129,7 @@ for (i in 1:nrow(correlations)){
 
 significant.correlations <- significant.correlations[order(abs(significant.correlations$corr),decreasing=TRUE),] 
 significant.correlations <- significant.correlations[which(!duplicated(significant.correlations$corr)),]
+significant.correlations
 ##Results:
 # var1 var2       corr
 # 24 damt donr  0.9817018
@@ -141,6 +145,38 @@ significant.correlations <- significant.correlations[which(!duplicated(significa
 # 15 tgif npro  0.7089701
 # 2  damt chld -0.5531045
 # 1  donr chld -0.5326077
+
+#Run t-test to test group means for all numeric variables across classification outcome
+significant2 <- data.frame(var = character(),
+                           p_value = numeric())
+
+numeric_vars <- data.frame(var = colnames(data)[-22:-24])
+
+for (i in 2:dim(numeric_vars)[1]) {
+  test <- t.test(data[which(data$donr == 1),c(numeric_vars$var[i])],data[which(data$donr== 0),c(numeric_vars$var[i])], "g", 0, FALSE, TRUE, 0.95)
+  if (!is.na(test$p.value) & test$p.value <= 0.05) {
+    tmp <- data.frame(var=numeric_vars$var[i],
+                      p_value = round(test$p.value,4))
+    
+    significant2 <- rbind(significant2,tmp)
+  }
+      print(i)
+    }
+
+significant2
+##There are several variables whose group means are significantly different between donr = 1 and donr = 0
+# var p_value
+# 1  reg1  0.0000
+# 2  reg3  0.0000
+# 3  reg4  0.0000
+# 4  home  0.0000
+# 5  chld  0.0000
+# 6  avhv  0.0004
+# 7  inca  0.0037
+# 8  plow  0.0000
+# 9  npro  0.0000
+# 10 lgif  0.0000
+# 11 agif  0.0192
 
 ##some multi-collinearity present between variables, should be kept in mind for further analysis
 
@@ -215,7 +251,7 @@ profit.log1 <- cumsum(14.5*c.valid[order(post.valid.log1, decreasing=T)]-2)
 plot(profit.log1) # see how profits change as more mailings are made
 n.mail.valid1 <- which.max(profit.log1) # number of mailings that maximizes profits
 c(n.mail.valid1, max(profit.log1)) # report number of mailings and maximum profit
-# 1291.0 11642.5
+# [1]  1343 11640
 
 cutoff.log1 <- sort(post.valid.log1, decreasing=T)[n.mail.valid1+1] # set cutoff based on n.mail.valid
 chat.valid.log1 <- ifelse(post.valid.log1>cutoff.log1, 1, 0) # mail to everyone above the cutoff
@@ -223,15 +259,9 @@ table(chat.valid.log1, c.valid) # classification table
 #               c.valid
 #chat.valid.log1   0   1
 #              0 709  18
-#              1 310 981
-# check n.mail.valid = 310+981 = 1291
-# check profit = 14.5*981-2*1291 = 11642.5
-
-# Results
-
-# n.mail Profit  Model
-# 1329   11624.5 LDA1
-# 1291   11642.5 Log1
+#              1 355 988
+# check n.mail.valid = 355+988 = 1343
+# check profit = 14.5*988-2*1343 = 11640
 
 #########################################
 #    MODEL 2: Logistic GAM              #
@@ -451,7 +481,7 @@ table(post.valid.RF1,c.valid)
 
 # n.mail Profit  Model
 # 1329   11624.5 LDA1
-# 1291   11642.5 Log1
+# 1343   11640 Log1
 # 1446   11419.5 GAM1
 # 1369   11341.5 QDA
 # 1192   10811   KNN
