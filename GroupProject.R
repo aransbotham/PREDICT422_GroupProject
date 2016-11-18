@@ -1,5 +1,5 @@
 ########################################################################
-#Name:                                                      #
+#Name: Group 2 - Bruckner, Funk, Sheets, Ulrich                        #
 #Due Date: December 4th, 2016                                          #
 #Course: PREDICT 422                                                   #
 #Section: 56                                                           #
