@@ -34,7 +34,7 @@
 # DONR: Classification Response Variable (1 = Donor, 0 = Non-donor)
 # DAMT: Prediction Response Variable (Donation Amount in $).
 
-setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/Module7")
+setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422_GroupProject")
 
 #Install Packages
 library(doBy)
