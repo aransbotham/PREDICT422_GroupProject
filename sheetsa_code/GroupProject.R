@@ -56,6 +56,7 @@ library(rpart)
 library(rpart.plot)
 library(gam)
 library(class)
+library(e1071)
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
@@ -482,6 +483,62 @@ table(post.valid.RF1,c.valid)
 # check n.mail.valid = 132+898 = 1030
 # check profit = 14.5*898-2*1030 = 10961
 
+#########################################
+#    MODEL 8: Support Vector Machine    #
+#########################################
+
+library(doParallel)
+cl <- makeCluster(detectCores()) 
+registerDoParallel(cl)
+
+model.svm =svm(donr~., data=data.train.std.c, kernel ="linear", cost =1e5)
+summary(model.svm)
+plot(model.svm , data.train.std.c$donr)
+
+post.valid.svm =predict(model.svm ,data.valid.std.c)
+
+profit.svm <- cumsum(14.5*c.valid[order(post.valid.svm, decreasing=T)]-2)
+plot(profit.svm) # see how profits change as more mailings are made
+
+n.mail.valid <- which.max(profit.svm)
+c(n.mail.valid, max(profit.svm))
+
+cutoff.svm <- sort(post.valid.svm, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
+chat.valid.svm <- ifelse(post.valid.svm > cutoff.svm, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.svm, c.valid) # classification table
+
+#                c.valid
+# chat.valid.svm   0   1
+#              0  86   7
+#              1 933 992
+
+# check n.mail.valid = 933+992 = 1925
+# check profit = 14.5*992-2*1925 = 10534
+
+set.seed(1)
+svm.tune=tune(svm,donr~.,data=data.train.std.c ,kernel ="radial",ranges =list(cost=c(0.001 , 0.01, 0.1, 1,5,10,100) ))
+summary(svm.tune)
+
+bestmod =svm.tune$best.model
+summary(bestmod)
+
+post.valid.svm =predict(bestmod,data.valid.std.c)
+
+profit.svm <- cumsum(14.5*c.valid[order(post.valid.svm, decreasing=T)]-2)
+plot(profit.svm) # see how profits change as more mailings are made
+
+n.mail.valid <- which.max(profit.svm)
+c(n.mail.valid, max(profit.svm))
+# 1444.0 11336.5
+
+cutoff.svm <- sort(post.valid.svm, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
+chat.valid.svm <- ifelse(post.valid.svm > cutoff.svm, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.svm, c.valid) # classification table
+# 
+               # c.valid
+# chat.valid.svm   0   1
+#              0 556  18
+#              1 463 981
 
 # Results
 
@@ -493,6 +550,8 @@ table(post.valid.RF1,c.valid)
 # 1126   9913.5  KNN
 # 1319   11383.5 Unaltered Tree
 # 1030   10961   RF
+# 1925   10534   Linear SVM (untuned)
+# 1444   11336.5 Radial SVM (tuned)
 
 ##Logistic is the best!  Most profit.
 
