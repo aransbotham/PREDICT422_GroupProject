@@ -466,6 +466,36 @@ table(post.valid.RF1,c.valid)
 #    MODEL 1: Least Squares             #
 #########################################
 
+model.ls1 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
+                  avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
+                data.train.std.y)
+
+pred.valid.ls1 <- predict(model.ls1, newdata = data.valid.std.y) # validation predictions
+mean((y.valid - pred.valid.ls1)^2) # mean prediction error
+# 1.867523
+sd((y.valid - pred.valid.ls1)^2)/sqrt(n.valid.y) # std error
+# 0.1696615
+
+# drop wrat for illustrative purposes
+model.ls2 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + 
+                  avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
+                data.train.std.y)
+
+pred.valid.ls2 <- predict(model.ls2, newdata = data.valid.std.y) # validation predictions
+mean((y.valid - pred.valid.ls2)^2) # mean prediction error
+# 1.867433
+sd((y.valid - pred.valid.ls2)^2)/sqrt(n.valid.y) # std error
+
+# Results
+
+# MPE  Model
+# 1.867523 LS1
+# 1.867433 LS2
+
+# select model.ls2 since it has minimum mean prediction error in the validation sample
+
+yhat.test <- predict(model.ls2, newdata = data.test.std) # test predictions
+
 #########################################
 #    MODEL 2: Best Subset w/ k-fold cv  #
 #########################################
@@ -485,3 +515,19 @@ table(post.valid.RF1,c.valid)
 #########################################
 #    MODEL 6: Lasso Regression          #
 #########################################
+
+
+#########################################
+# FINAL RESULTS                         #
+#########################################
+# Save final results for both classification and regression
+
+length(chat.test) # check length = 2007
+length(yhat.test) # check length = 2007
+chat.test[1:10] # check this consists of 0s and 1s
+yhat.test[1:10] # check this consists of plausible predictions of damt
+
+ip <- data.frame(chat=chat.test, yhat=yhat.test) # data frame with two variables: chat and yhat
+write.csv(ip, file="ABC.csv", row.names=FALSE) # use your initials for the file name
+
+# submit the csv file in Canvas for evaluation based on actual test donr and damt values
