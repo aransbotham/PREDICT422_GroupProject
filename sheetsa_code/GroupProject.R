@@ -92,6 +92,7 @@ charity.t$agif <- log(charity.t$agif)
 charity.t$rgif <- log(charity.t$rgif)
 charity.t$lgif <- log(charity.t$lgif)
 
+#Visualize data after making transformations
 plots2 <- lapply(colnames(charity.t)[2:23], plot_vars, data = charity.t[2:23])
 
 n <- length(plots2)
