@@ -1,5 +1,5 @@
 ########################################################################
-#Name: Group 2 - Bruckner, Funk, Sheets, Ulrich                        #
+#Name: Group 2 - Bruckner, Funk, Sheets, Zimmerman                     #
 #Due Date: December 4th, 2016                                          #
 #Course: PREDICT 422                                                   #
 #Section: 56                                                           #
@@ -39,6 +39,25 @@ setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422
 set.seed(1)
 
 #Install Packages
+install.packages("doBy")
+install.packages("psych")
+install.packages("lars")
+install.packages("GGally")
+install.packages("ggplot2")
+install.packages("gridExtra")
+install.packages("corrgram")
+install.packages("corrplot")
+install.packages("leaps")
+install.packages("glmnet")
+install.packages("MASS")
+install.packages("gbm")
+install.packages("tree")
+install.packages("rpart")
+install.packages("rpart.plot")
+install.packages("gam")
+install.packages("class")
+install.packages("e1071")
+
 library(doBy)
 library(psych)
 library(lars)
@@ -63,9 +82,13 @@ data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",
 
 #Explore the data -- how big is it, what types of variables included, distributions and missing values.
 dim(data)
+summary(data) # donr and damt each have 2007 NA values -- these are the test set
+str(data) # all int except agif is num and part is a factor with 3 levels
+head(data)
+class(data) # data.frame
+nrow(data) # 8009 rows
+ncol(data) # 24 variables
 names(data)
-summary(data)
-str(data)
 
 plots <- vector("list", 22)
 names <- colnames(data)
