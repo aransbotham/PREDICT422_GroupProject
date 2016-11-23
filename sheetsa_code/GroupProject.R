@@ -96,6 +96,7 @@ charity.t$incm <- log(charity.t$incm)
 charity.t$agif <- log(charity.t$agif)
 charity.t$rgif <- log(charity.t$rgif)
 charity.t$lgif <- log(charity.t$lgif)
+charity.t$tgif <- log(charity.t$tgif)
 
 #Visualize data after making transformations
 plots2 <- lapply(colnames(charity.t)[2:23], plot_vars, data = charity.t[2:23])
@@ -147,6 +148,23 @@ significant.correlations
 # 15 tgif npro  0.7089701
 # 2  damt chld -0.5531045
 # 1  donr chld -0.5326077
+ 
+##Results with tgif transformed:
+#var1 var2       corr
+#24 damt donr  0.9817018
+#15 tgif npro  0.8734276
+#17 rgif lgif  0.8512241
+#4  inca avhv  0.8484572
+#7  inca incm  0.8296747
+#18 agif lgif  0.8294224
+#8  plow incm -0.8120381
+#20 agif rgif  0.7706645
+#11 plow inca -0.7510141
+#3  incm avhv  0.7304313
+#5  plow avhv -0.7187952
+#2  damt chld -0.5531045
+#1  donr chld -0.5326077
+  
 
 #Run t-test to test group means for all numeric variables across classification outcome
 significant2 <- data.frame(var = character(),
