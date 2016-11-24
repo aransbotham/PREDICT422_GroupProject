@@ -1,5 +1,5 @@
 ########################################################################
-#Name: Group 2 - Bruckner, Funk, Sheets, Ulrich                        #
+#Name: Group 2 - Bruckner, Funk, Sheets, Zimmerman                     #
 #Due Date: December 4th, 2016                                          #
 #Course: PREDICT 422                                                   #
 #Section: 56                                                           #
@@ -39,6 +39,25 @@ setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422
 set.seed(1)
 
 #Install Packages
+install.packages("doBy")
+install.packages("psych")
+install.packages("lars")
+install.packages("GGally")
+install.packages("ggplot2")
+install.packages("gridExtra")
+install.packages("corrgram")
+install.packages("corrplot")
+install.packages("leaps")
+install.packages("glmnet")
+install.packages("MASS")
+install.packages("gbm")
+install.packages("tree")
+install.packages("rpart")
+install.packages("rpart.plot")
+install.packages("gam")
+install.packages("class")
+install.packages("e1071")
+
 library(doBy)
 library(psych)
 library(lars)
@@ -64,9 +83,13 @@ data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",
 
 #Explore the data -- how big is it, what types of variables included, distributions and missing values.
 dim(data)
+summary(data) # donr and damt each have 2007 NA values -- these are the test set
+str(data) # all int except agif is num and part is a factor with 3 levels
+head(data)
+class(data) # data.frame
+nrow(data) # 8009 rows
+ncol(data) # 24 variables
 names(data)
-summary(data)
-str(data)
 
 plots <- vector("list", 22)
 names <- colnames(data)
@@ -97,6 +120,7 @@ charity.t$incm <- log(charity.t$incm)
 charity.t$agif <- log(charity.t$agif)
 charity.t$rgif <- log(charity.t$rgif)
 charity.t$lgif <- log(charity.t$lgif)
+charity.t$tgif <- log(charity.t$tgif)
 
 #Visualize data after making transformations
 plots2 <- lapply(colnames(charity.t)[2:23], plot_vars, data = charity.t[2:23])
@@ -148,6 +172,23 @@ significant.correlations
 # 15 tgif npro  0.7089701
 # 2  damt chld -0.5531045
 # 1  donr chld -0.5326077
+ 
+##Results with tgif transformed:
+#var1 var2       corr
+#24 damt donr  0.9817018
+#15 tgif npro  0.8734276
+#17 rgif lgif  0.8512241
+#4  inca avhv  0.8484572
+#7  inca incm  0.8296747
+#18 agif lgif  0.8294224
+#8  plow incm -0.8120381
+#20 agif rgif  0.7706645
+#11 plow inca -0.7510141
+#3  incm avhv  0.7304313
+#5  plow avhv -0.7187952
+#2  damt chld -0.5531045
+#1  donr chld -0.5326077
+  
 
 #Run t-test to test group means for all numeric variables across classification outcome
 significant2 <- data.frame(var = character(),
