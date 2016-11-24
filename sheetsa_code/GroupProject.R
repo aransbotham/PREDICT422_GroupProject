@@ -290,15 +290,15 @@ chat.valid.log1 <- ifelse(post.valid.log1>cutoff.log1, 1, 0) # mail to everyone 
 table(chat.valid.log1, c.valid) # classification table
 #                 c.valid
 # chat.valid.log1   0   1
-# 0 675  13
-# 1 344 986
-# check n.mail.valid = 355+988 = 1343
-# check profit = 14.5*988-2*1343 = 11640
+#               0 675  13
+#               1 344 986
+# check n.mail.valid = 344+986 = 1330
+# check profit = 14.5*986-2*1330 = 11637
 
 #########################################
 #    MODEL 2: Logistic GAM              #
 #########################################
-
+set.seed(1)
 model.gam1=gam(donr~reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
              avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + s(agif ,df =5),
            family = binomial , data = data.train.std.c)
@@ -311,23 +311,23 @@ profit.gam1 <- cumsum(14.5*c.valid[order(post.valid.gam1, decreasing=T)]-2)
 plot(profit.gam1) # see how profits change as more mailings are made
 n.mail.valid1 <- which.max(profit.gam1) # number of mailings that maximizes profits
 c(n.mail.valid1, max(profit.gam1)) # report number of mailings and maximum profit
-# 1446.0 11419.5
+# 1396 11389
 
 cutoff.gam1 <- sort(post.valid.gam1, decreasing=T)[n.mail.valid1+1] # set cutoff based on n.mail.valid
 chat.valid.gam1 <- ifelse(post.valid.gam1>cutoff.log1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.gam1, c.valid) # classification table
-# c.valid
+#                 c.valid
 # chat.valid.gam1   0   1
-#                0 560  12
-#                1 459 987
-# check n.mail.valid = 459+987 = 1446
-# check profit = 14.5*987-2*1446 = 11419.5
+#               0 576  20
+# 1               443 979
+# check n.mail.valid = 443+979 = 1422
+# check profit = 14.5*979-2*1442 = 11311.5
 
 
 #########################################
 #    MODEL 3: LDA                       #
 #########################################
-
+set.seed(1)
 model.lda1 <- lda(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
                     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
                   data.train.std.c) # include additional terms on the fly using I()
@@ -343,15 +343,15 @@ profit.lda1 <- cumsum(14.5*c.valid[order(post.valid.lda1, decreasing=T)]-2)
 plot(profit.lda1) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.lda1) # number of mailings that maximizes profits
 c(n.mail.valid, max(profit.lda1)) # report number of mailings and maximum profit
-# 1391.0 11631
+# 1363.0 11643.5
 
 cutoff.lda1 <- sort(post.valid.lda1, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.lda1 <- ifelse(post.valid.lda1>cutoff.lda1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.lda1, c.valid) # classification table
-#               c.valid
-#chat.valid.lda1   0   1
-#              0 622  5
-#              1 397 994
+#                 c.valid
+# chat.valid.lda1   0   1
+# 0 647   8
+# 1 372 991
 # check n.mail.valid = 397 + 994 = 1391
 # check profit = 14.5*994-2*1391 = 11631
 
@@ -573,9 +573,9 @@ table(chat.valid.svm, c.valid) # classification table
 # Results
 
 # n.mail Profit  Model
-# 1391   11631   LDA1
-# 1343   11640   Log1
-# 1446   11419.5 GAM1
+# 1363   11643.5 LDA1
+# 1330   11637   Log1
+# 1422   11311.5 GAM1
 # 1369   11341.5 QDA
 # 1126   9913.5  KNN
 # 1319   11383.5 Unaltered Tree
