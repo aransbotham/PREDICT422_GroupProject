@@ -352,8 +352,8 @@ table(chat.valid.lda1, c.valid) # classification table
 # chat.valid.lda1   0   1
 # 0 647   8
 # 1 372 991
-# check n.mail.valid = 397 + 994 = 1391
-# check profit = 14.5*994-2*1391 = 11631
+# check n.mail.valid = 397 + 991 = 1388
+# check profit = 14.5*991-2*1391 = 11587.5
 
 #########################################
 #    MODEL 4: QDA                       #
@@ -373,17 +373,17 @@ profit.qda1 <- cumsum(14.5*c.valid[order(post.valid.qda1, decreasing=T)]-2)
 plot(profit.qda1) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.qda1) # number of mailings that maximizes profits
 c(n.mail.valid, max(profit.qda1)) # report number of mailings and maximum profit
-# 1369.0 11196.5
+# 1396.0 11229.5
 
 cutoff.qda1 <- sort(post.valid.qda1, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.qda1 <- ifelse(post.valid.qda1>cutoff.qda1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.qda1, c.valid) # classification table
-#                  c.valid
+#                 c.valid
 # chat.valid.qda1   0   1
-#               0 611  38
-#               1 408 961
-# check n.mail.valid = 408+961 = 1369
-# check profit = 14.5*971-2*1369 = 11341.5
+#               0 590  32
+#               1 429 967
+# check n.mail.valid = 429+967 = 1396
+# check profit = 14.5*967-2*1396 = 11229.5
 
 #########################################
 #    MODEL 5: KNN                       #
@@ -392,13 +392,13 @@ table(chat.valid.qda1, c.valid) # classification table
 set.seed(1)
 model.knn1=knn(x.train.std,x.valid.std,c.train,k=1)
 mean(c.valid != model.knn1)
-# [1] 0.2215064
+# [1] 0.2205154
 
 table(model.knn1 ,c.valid)
-#             c.valid
+#            c.valid
 # model.knn1   0   1
-#          0 732  160
-#          1 287 839
+#          0 738 164
+#          1 281 835
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
 
@@ -406,10 +406,10 @@ profit.knn1 <- cumsum(14.5*c.valid[order(model.knn1, decreasing=T)]-2)
 plot(profit.knn1) # see how profits change as more mailings are made
 
 mean((as.numeric(as.character(model.knn1)) - c.valid)^2)
-# [1] 0.2215064
+# [1] 0.2205154
 
-# check n.mail.valid = 287+839 = 1126
-# check profit = 14.5*839-2*1126 = 9913.5
+# check n.mail.valid = 281+835 = 1116
+# check profit = 14.5*835-2*1116 = 9875.5
 
 
 #########################################
@@ -573,11 +573,11 @@ table(chat.valid.svm, c.valid) # classification table
 # Results
 
 # n.mail Profit  Model
-# 1363   11643.5 LDA1
-# 1330   11637   Log1
+# 1388   11587.5 LDA1
+# 1330   11637   Log1 -- the best model!
 # 1422   11311.5 GAM1
-# 1369   11341.5 QDA
-# 1126   9913.5  KNN
+# 1396   11229.5 QDA
+# 1116   9875.5  KNN
 # 1319   11383.5 Unaltered Tree
 # 1030   10961   RF
 # 1925   10534   Linear SVM (untuned)
