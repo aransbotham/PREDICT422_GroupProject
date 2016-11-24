@@ -57,6 +57,7 @@ library(rpart.plot)
 library(gam)
 library(class)
 library(e1071)
+library(randomForest)
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
