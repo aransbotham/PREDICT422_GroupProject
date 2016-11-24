@@ -38,25 +38,28 @@ setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422
 
 set.seed(1)
 
-#Install Packages
-install.packages("doBy")
-install.packages("psych")
-install.packages("lars")
-install.packages("GGally")
-install.packages("ggplot2")
-install.packages("gridExtra")
-install.packages("corrgram")
-install.packages("corrplot")
-install.packages("leaps")
-install.packages("glmnet")
-install.packages("MASS")
-install.packages("gbm")
-install.packages("tree")
-install.packages("rpart")
-install.packages("rpart.plot")
-install.packages("gam")
-install.packages("class")
-install.packages("e1071")
+#Install Packages if they don't current exist on this machine
+list.of.packages <- c("doBy"
+                      ,"psych"
+                      ,"lars"
+                      ,"GGally"
+                      ,"ggplot2"
+                      ,"gridExtra"
+                      ,"corrgram"
+                      ,"corrplot"
+                      ,"leaps"
+                      ,"glmnet"
+                      ,"MASS"
+                      ,"gbm"
+                      ,"tree"
+                      ,"rpart"
+                      ,"rpart.plot"
+                      ,"gam"
+                      ,"class"
+                      ,"e1071"
+                      ,"ggplot2")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
 
 library(doBy)
 library(psych)
@@ -157,22 +160,7 @@ for (i in 1:nrow(correlations)){
 significant.correlations <- significant.correlations[order(abs(significant.correlations$corr),decreasing=TRUE),] 
 significant.correlations <- significant.correlations[which(!duplicated(significant.correlations$corr)),]
 significant.correlations
-##Results:
-# var1 var2       corr
-# 24 damt donr  0.9817018
-# 17 rgif lgif  0.8512241
-# 4  inca avhv  0.8484572
-# 7  inca incm  0.8296747
-# 18 agif lgif  0.8294224
-# 8  plow incm -0.8120381
-# 20 agif rgif  0.7706645
-# 11 plow inca -0.7510141
-# 3  incm avhv  0.7304313
-# 5  plow avhv -0.7187952
-# 15 tgif npro  0.7089701
-# 2  damt chld -0.5531045
-# 1  donr chld -0.5326077
- 
+
 ##Results with tgif transformed:
 #var1 var2       corr
 #24 damt donr  0.9817018
@@ -281,7 +269,7 @@ do.call("grid.arrange", c(plots3))
 #########################################
 #    MODEL 1: Logistic                  #
 #########################################
-
+set.seed(1)
 model.log1 <- glm(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
                     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
                   data.train.std.c, family=binomial("logit"))
@@ -295,15 +283,15 @@ profit.log1 <- cumsum(14.5*c.valid[order(post.valid.log1, decreasing=T)]-2)
 plot(profit.log1) # see how profits change as more mailings are made
 n.mail.valid1 <- which.max(profit.log1) # number of mailings that maximizes profits
 c(n.mail.valid1, max(profit.log1)) # report number of mailings and maximum profit
-# [1]  1343 11640
+#[1]  1330 11637
 
 cutoff.log1 <- sort(post.valid.log1, decreasing=T)[n.mail.valid1+1] # set cutoff based on n.mail.valid
 chat.valid.log1 <- ifelse(post.valid.log1>cutoff.log1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.log1, c.valid) # classification table
-#               c.valid
-#chat.valid.log1   0   1
-#              0 709  18
-#              1 355 988
+#                 c.valid
+# chat.valid.log1   0   1
+# 0 675  13
+# 1 344 986
 # check n.mail.valid = 355+988 = 1343
 # check profit = 14.5*988-2*1343 = 11640
 
