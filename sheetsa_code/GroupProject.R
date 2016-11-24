@@ -593,15 +593,18 @@ table(chat.valid.svm, c.valid) # classification table
 #    MODEL 1: Least Squares             #
 #########################################
 
+# This needs review.  
+  
+set.seed(1)
 model.ls1 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
                   avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
                 data.train.std.y)
 
 pred.valid.ls1 <- predict(model.ls1, newdata = data.valid.std.y) # validation predictions
 mean((y.valid - pred.valid.ls1)^2) # mean prediction error
-# 1.867523
+# 1.556378 -- better than the MSE in the provided code since I think it didn't include transformations
 sd((y.valid - pred.valid.ls1)^2)/sqrt(n.valid.y) # std error
-# 0.1696615
+# 0.161215
 
 # drop wrat for illustrative purposes
 model.ls2 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + 
@@ -610,23 +613,89 @@ model.ls2 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf +
 
 pred.valid.ls2 <- predict(model.ls2, newdata = data.valid.std.y) # validation predictions
 mean((y.valid - pred.valid.ls2)^2) # mean prediction error
-# 1.867433
+# 1.557593
 sd((y.valid - pred.valid.ls2)^2)/sqrt(n.valid.y) # std error
+# 0.1611949
+
+# model using just significant variables
+
+model.ls3 <- lm(damt ~ reg1 + reg3 + reg4 + home + chld + avhv + inca + plow + npro + lgif + agif, 
+                data.train.std.y)
+
+pred.valid.ls3 <- predict(model.ls3, newdata = data.valid.std.y) # validation predictions
+mean((y.valid - pred.valid.ls3)^2) # mean prediction error
+# 1.76369
+sd((y.valid - pred.valid.ls3)^2)/sqrt(n.valid.y) # std error
+# 0.1664353
 
 # Results
 
 # MPE  Model
-# 1.867523 LS1
-# 1.867433 LS2
+# 1.556378 LS1
+# 1.557593 LS2
+# 1.763690 LS3
 
-# select model.ls2 since it has minimum mean prediction error in the validation sample
+# select model.ls1 since it has minimum mean prediction error in the validation sample
 
-yhat.test <- predict(model.ls2, newdata = data.test.std) # test predictions
+yhat.test <- predict(model.ls1, newdata = data.test.std) # test predictions
+#yhat.test
 
 #########################################
 #    MODEL 2: Best Subset w/ k-fold cv  #
 #########################################
 
+# This needs work.
+
+predict.regsubsets = function (object, newdata, id ,...){
+  form = as.formula(object$call[[2]])
+  mat = model.matrix(form, newdata)
+  coefi = coef(object, id=id)
+  xvars = names(coefi )
+  mat[,xvars]%*% coefi
+}
+
+k=10
+set.seed(1)
+folds <- sample(1:k, nrow(data.train.std.y), replace = TRUE)
+cv.errors<-matrix (NA,k,20, dimnames=list(NULL, paste(1:20)))
+
+for(j in 1:k){
+  model.bestsub1 <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
+                       avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
+                       data = data.train.std.y[folds !=j,],
+                       nvmax =20)
+  for(i in 1:20) {
+    pred=predict.regsubsets(model.bestsub1, data.train.std.y[folds==j,], id=i)
+    cv.errors[j,i]=mean((data.train.std.y$damt[folds==j]-pred)^2)
+  }
+}
+
+mean.cv.errors <- apply(cv.errors, 2, mean)
+mean.cv.errors # M14 has smallest error -- 1.393280
+
+par(mfrow =c(1,1))
+plot(mean.cv.errors, type='b') # 14 variable model is best
+
+best.model <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
+                           avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
+                         data = data.train.std.y,
+                         nvmax =20)
+
+# Coefficient Estimates
+coef(best.model, 14)
+
+pred.valid.best.model <- predict.regsubsets(best.model, newdata = data.valid.std.y, id=14) # validation predictions
+mean((y.valid - pred.valid.best.model)^2) # mean prediction error
+# 1.558577
+sd((y.valid - pred.valid.best.model)^2)/sqrt(n.valid.y) # std error
+# 0.1606044
+
+yhat.test.bestsub <- predict.regsubsets(best.model, newdata = data.test.std, id=14) # test predictions
+#yhat.test.bestsub
+
+#  Error in model.frame.default(object, data, xlev = xlev) : 
+#variable lengths differ (found for 'reg1')
+  
 #########################################
 #    MODEL 3: Principal Compoents       #
 #########################################
@@ -639,6 +708,41 @@ yhat.test <- predict(model.ls2, newdata = data.test.std) # test predictions
 #    MODEL 5: Ridge Regression          #
 #########################################
 
+# This needs work. 
+  
+grid = 10^seq(10,-2, length = 100)
+ridge.fit0 = glmnet(x.train.std, data.train.std.y, alpha = 0, lambda = grid)
+# Error in glmnet(x.train.std, data.train.std.y, alpha = 0, lambda = grid) : 
+# number of observations in y (1995) not equal to the number of rows of x (3984)
+
+plot(ridge.fit0,xvar="lambda",label=T)
+
+k=10
+set.seed(1)
+cv.out <- cv.glmnet(x.train.std, data.train.std.y, alpha = 0)
+
+names(cv.out)
+plot(cv.out)
+# example of how to interpret this plot: http://gerardnico.com/wiki/r/ridge_lasso
+names(cv.out)
+
+largelam <- cv.out$lambda.1se
+largelam # lambda = 
+
+ridge.fit <- glmnet(x.train.std, data.train.std.y,alpha=0,lambda=####)
+
+# Coefficient Estimates
+coef(ridge.fit)
+
+pred.valid.ridge <- predict(ridge.fit,newx = x.test.std) # validation predictions
+mean((y.valid - pred.valid.ridge)^2) # mean prediction error
+# 
+sd((y.valid - pred.valid.ridge)^2)/sqrt(n.valid.y) # std error
+# 
+
+yhat.test.ridge <- predict(ridge.fit, newdata = data.test.std) # test predictions
+#yhat.test  
+  
 #########################################
 #    MODEL 6: Lasso Regression          #
 #########################################
