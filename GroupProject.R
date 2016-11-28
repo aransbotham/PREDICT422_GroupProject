@@ -1192,7 +1192,7 @@ reg.model <- model.lin2.valid
 data.test.std$c.hat.prob <- predict(class.model, data.test.std, type="response")
 data.test.std$c.hat.class <- ifelse(data.test.std$c.hat.prob > cutoff,1,0)
 
-data.test.std$y.hat <- predict(reg.model,data.test.std)
+data.test.std$y.hat <- ifelse(data.test.std$c.hat.class == 1,predict(reg.model,data.test.std),"-")
 
 # n.valid post probs
 ip <- data.frame(chat=data.test.std$c.hat.class, yhat=data.test.std$y.hat) # data frame with two variables: chat and yhat
