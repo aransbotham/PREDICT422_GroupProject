@@ -811,11 +811,11 @@ plot(model.svm , data.train.std.c$donr)
 
 post.valid.svm =predict(model.svm ,data.valid.std.c)
 
-profit.svm <- cumsum(14.5*c.valid[order(post.valid.svm, decreasing=T)]-2)
-plot(profit.svm) # see how profits change as more mailings are made
+profit.svm1 <- cumsum(14.5*c.valid[order(post.valid.svm, decreasing=T)]-2)
+plot(profit.svm1) # see how profits change as more mailings are made
 
-n.mail.valid <- which.max(profit.svm)
-c(n.mail.valid, max(profit.svm))
+n.mail.valid <- which.max(profit.svm1)
+c(n.mail.valid, max(profit.svm1))
 
 cutoff.svm <- sort(post.valid.svm, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.svm <- ifelse(post.valid.svm > cutoff.svm, 1, 0) # mail to everyone above the cutoff
@@ -843,7 +843,7 @@ plot(profit.svm) # see how profits change as more mailings are made
 
 n.mail.valid <- which.max(profit.svm)
 c(n.mail.valid, max(profit.svm))
-# 1444.0 11336.5
+# [1]  1366 11536
 
 cutoff.svm <- sort(post.valid.svm, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.svm <- ifelse(post.valid.svm > cutoff.svm, 1, 0) # mail to everyone above the cutoff
@@ -851,8 +851,8 @@ table(chat.valid.svm, c.valid) # classification table
 # 
                # c.valid
 # chat.valid.svm   0   1
-#              0 556  18
-#              1 463 981
+#              0 637  15
+#              1 382 984
 
 # Results
 
@@ -874,7 +874,7 @@ table(chat.valid.svm, c.valid) # classification table
 # 1308   11565   Boosted Tree
 # 1055   11099.5 RF
 # 1925   10534   Linear SVM (untuned)
-# 1444   11336.5 Radial SVM (tuned)
+# 1366   11536 Radial SVM (tuned)
 
 ##Logistic is the best!  Most profit.
 ## should use this model object for test set predictions: model.log1b_r1
