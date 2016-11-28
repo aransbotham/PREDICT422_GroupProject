@@ -1185,7 +1185,17 @@ length(yhat.test) # check length = 2007
 chat.test[1:10] # check this consists of 0s and 1s
 yhat.test[1:10] # check this consists of plausible predictions of damt
 
-ip <- data.frame(chat=chat.test, yhat=yhat.test) # data frame with two variables: chat and yhat
-write.csv(ip, file="ABC.csv", row.names=FALSE) # use your initials for the file name
+class.model <- model.log1b_r1
+cutoff <- cutoff.log1b_r1 
+reg.model <- model.lin2.valid
+
+data.test.std$c.hat.prob <- predict(class.model, data.test.std, type="response")
+data.test.std$c.hat.class <- ifelse(data.test.std$c.hat.prob > cutoff,1,0)
+
+data.test.std$y.hat <- predict(reg.model,data.test.std)
+
+# n.valid post probs
+ip <- data.frame(chat=data.test.std$c.hat.class, yhat=data.test.std$y.hat) # data frame with two variables: chat and yhat
+write.csv(ip, file="BFSZ.csv", row.names=FALSE) # use your initials for the file name
 
 # submit the csv file in Canvas for evaluation based on actual test donr and damt values
