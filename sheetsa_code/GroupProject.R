@@ -57,7 +57,12 @@ list.of.packages <- c("doBy"
                       ,"gam"
                       ,"class"
                       ,"e1071"
-                      ,"ggplot2")
+                      ,"randomForest"
+                      ,"doParallel"
+                      ,"iterators"
+                      ,"foreach"
+                      ,"parallel"
+                      ,"pls")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -80,6 +85,12 @@ library(gam)
 library(class)
 library(e1071)
 library(randomForest)
+library(doParallel)
+library(iterators)
+library(foreach)
+library(parallel)
+library(pls)
+
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
@@ -321,8 +332,7 @@ table(chat.valid.gam1, c.valid) # classification table
 #               0 576  20
 # 1               443 979
 # check n.mail.valid = 443+979 = 1422
-# check profit = 14.5*979-2*1442 = 11311.5
-
+# check profit = 14.5*979-2*1422 = 11351.5 # This doesn't equal 11389...
 
 #########################################
 #    MODEL 3: LDA                       #
@@ -350,10 +360,10 @@ chat.valid.lda1 <- ifelse(post.valid.lda1>cutoff.lda1, 1, 0) # mail to everyone 
 table(chat.valid.lda1, c.valid) # classification table
 #                 c.valid
 # chat.valid.lda1   0   1
-# 0 647   8
-# 1 372 991
-# check n.mail.valid = 397 + 991 = 1388
-# check profit = 14.5*991-2*1391 = 11587.5
+#               0 647   8
+#               1 372 991
+# check n.mail.valid = 372 + 991 = 1363
+# check profit = 14.5*991-2*1363 = 11643.5
 
 #########################################
 #    MODEL 4: QDA                       #
@@ -411,7 +421,6 @@ mean((as.numeric(as.character(model.knn1)) - c.valid)^2)
 # check n.mail.valid = 281+835 = 1116
 # check profit = 14.5*835-2*1116 = 9875.5
 
-
 #########################################
 #    MODEL 6: DECISION TREE             #
 #########################################
@@ -458,7 +467,6 @@ post.valid.tree1 <- predict(model.tree1.prune,data.valid.std.c)
 mean((as.numeric(as.character(post.valid.tree1[,2])) - c.valid)^2)
 # [1] 0.110671
 
-
 profit.tree1 <- cumsum(14.5*c.valid[order(post.valid.tree1[,2], decreasing=T)]-2)
 plot(profit.tree0) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.tree1)
@@ -487,7 +495,7 @@ model.boost1 =gbm(donr~.,data=data.train.std.c, distribution="gaussian",n.trees 
 post.valid.boost1 = predict(model.boost1,newdata = data.valid.std.c,n.trees =5000)
 
 mean((post.valid.boost1 - c.valid)^2)
-# [1] 0.1214981
+# [1] 0.1179965
 
 model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
              mtry=13, ntree =25)
@@ -495,7 +503,7 @@ model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
 post.valid.RF1 = predict(model.RF1,newdata = data.valid.std.c)
 
 mean((as.numeric(as.character(post.valid.RF1)) - c.valid)^2)
-# [1]  0.1154609
+# [1]  0.1159564
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
 
@@ -504,14 +512,13 @@ plot(profit.RF1) # see how profits change as more mailings are made
 
 
 table(post.valid.RF1,c.valid)
-                # c.valid
-# post.valid.RF1   0   1
-             # 0 887 101
-             # 1 132 898
+#                c.valid
+#post.valid.RF1   0   1
+#             0 879  94
+#             1 140 905
 
-
-# check n.mail.valid = 132+898 = 1030
-# check profit = 14.5*898-2*1030 = 10961
+# check n.mail.valid = 140+905 = 1045
+# check profit = 14.5*905-2*1045 = 11032.5
 
 #########################################
 #    MODEL 8: Support Vector Machine    #
@@ -593,160 +600,293 @@ table(chat.valid.svm, c.valid) # classification table
 #    MODEL 1: Least Squares             #
 #########################################
 
-# This needs review.  
-  
-set.seed(1)
-model.ls1 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
-                  avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
-                data.train.std.y)
+# Linear model with all variables.
+model.lin1 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
+                   avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
+                 data.train.std.y)
+summary(model.lin1)
 
-pred.valid.ls1 <- predict(model.ls1, newdata = data.valid.std.y) # validation predictions
-mean((y.valid - pred.valid.ls1)^2) # mean prediction error
-# 1.556378 -- better than the MSE in the provided code since I think it didn't include transformations
-sd((y.valid - pred.valid.ls1)^2)/sqrt(n.valid.y) # std error
-# 0.161215
+# Use regsubsets() to identify the best subset of predictor variables.
+regfit.full <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
+                            wrat + genf + avhv + incm + inca + plow + npro + tgif +
+                            lgif + rgif + tdon + tlag + agif, data.train.std.y, nvmax = 20)
 
-# drop wrat for illustrative purposes
-model.ls2 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + 
-                  avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
-                data.train.std.y)
+reg.summary = summary(regfit.full)
+names(reg.summary)
+reg.summary$rsq
+reg.summary$adjr2
 
-pred.valid.ls2 <- predict(model.ls2, newdata = data.valid.std.y) # validation predictions
-mean((y.valid - pred.valid.ls2)^2) # mean prediction error
-# 1.557593
-sd((y.valid - pred.valid.ls2)^2)/sqrt(n.valid.y) # std error
-# 0.1611949
+which.max(reg.summary$adjr2) #15
+which.min(reg.summary$cp) #14
+which.min(reg.summary$bic) #11
 
-# model using just significant variables
+plot(regfit.full, scale = "Cp")
+plot(regfit.full, scale = "bic")
 
-model.ls3 <- lm(damt ~ reg1 + reg3 + reg4 + home + chld + avhv + inca + plow + npro + lgif + agif, 
-                data.train.std.y)
+# Start with model with highest adjr2. 
+coef(regfit.full, 15)
+model.lin2 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf +
+                   incm + plow + tgif + lgif + rgif + tdon + agif,
+                 data.train.std.y)
+summary(model.lin2)
 
-pred.valid.ls3 <- predict(model.ls3, newdata = data.valid.std.y) # validation predictions
-mean((y.valid - pred.valid.ls3)^2) # mean prediction error
-# 1.76369
-sd((y.valid - pred.valid.ls3)^2)/sqrt(n.valid.y) # std error
-# 0.1664353
+# Run model on validation set.
+model.lin2.valid <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf +
+                         incm + plow + tgif + lgif + rgif + tdon + agif,
+                       data.valid.std.y)
+summary(model.lin2.valid)
 
-# Results
+# Make predictions for validation set based on model.
+pred.valid.lin2 <- predict(model.lin2.valid, data.valid.std.y)
 
-# MPE  Model
-# 1.556378 LS1
-# 1.557593 LS2
-# 1.763690 LS3
+MPE_adjR <- mean((y.valid - pred.valid.lin2)^2)
+StandardError_adjR <- sd((y.valid - pred.valid.lin2)^2)/sqrt(n.valid.y)
 
-# select model.ls1 since it has minimum mean prediction error in the validation sample
+MPE_adjR # 1.50811
+StandardError_adjR # 0.1570488
 
-yhat.test <- predict(model.ls1, newdata = data.test.std) # test predictions
-#yhat.test
+#### Now for the model with lowest cp. 
+coef(regfit.full, 14)
+model.lin_cp <- lm(damt ~ reg2 + reg3 + reg4 + home + chld + hinc + genf +
+                     incm + plow + tgif + lgif + rgif + tdon + agif,
+                   data.train.std.y)
+summary(model.lin_cp)
+
+# Run model on validation set.
+model.lin_cp.valid <- lm(damt ~ reg2 + reg3 + reg4 + home + chld + hinc + genf +
+                           incm + plow + tgif + lgif + rgif + tdon + agif,
+                         data.valid.std.y)
+summary(model.lin_cp.valid)
+
+# Make predictions for validation set based on model.
+pred.valid.lin_cp <- predict(model.lin_cp.valid, data.valid.std.y)
+
+MPE_cp <- mean((y.valid - pred.valid.lin_cp)^2)
+StandardError_cp <- sd((y.valid - pred.valid.lin_cp)^2)/sqrt(n.valid.y)
+
+MPE_cp # 1.50853
+StandardError_cp # 0.1568465
+
+#### Now for the model with the lowest bic
+coef(regfit.full, 11)
+model.lin_bic <- lm(damt ~ reg3 + reg4 + home + chld + hinc +
+                      incm + plow + tgif + lgif + rgif + agif,
+                    data.train.std.y)
+summary(model.lin_bic)
+
+# Run model on validation set.
+model.lin_bic.valid <- lm(damt ~ reg3 + reg4 + home + chld + hinc +
+                            incm + plow + tgif + lgif + rgif + agif,
+                          data.valid.std.y)
+summary(model.lin_bic.valid)
+
+# Make predictions for validation set based on model.
+pred.valid.lin_bic <- predict(model.lin_bic.valid, data.valid.std.y)
+
+MPE_bic <- mean((y.valid - pred.valid.lin_bic)^2)
+StandardError_bic <- sd((y.valid - pred.valid.lin_bic)^2)/sqrt(n.valid.y)
+
+MPE_bic # 1.527695
+StandardError_bic # 0.1596775
+
+
+##
+MPE_adjR # 1.50811
+StandardError_adjR # 0.1570488
+
+MPE_cp # 1.50853
+StandardError_cp # 0.1568465
+
+MPE_bic # 1.527695
+StandardError_bic # 0.1596775
+
+#
+# Model using highest Adjusted R-squared is best.
 
 #########################################
 #    MODEL 2: Best Subset w/ k-fold cv  #
 #########################################
-
-# This needs work.
-
-predict.regsubsets = function (object, newdata, id ,...){
-  form = as.formula(object$call[[2]])
-  mat = model.matrix(form, newdata)
-  coefi = coef(object, id=id)
-  xvars = names(coefi )
-  mat[,xvars]%*% coefi
-}
-
-k=10
 set.seed(1)
-folds <- sample(1:k, nrow(data.train.std.y), replace = TRUE)
-cv.errors<-matrix (NA,k,20, dimnames=list(NULL, paste(1:20)))
+regfit.best <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
+                            wrat + genf + avhv + incm + inca + plow + npro + tgif +
+                            lgif + rgif + tdon + tlag + agif, data.train.std.y, nvmax = 20)
 
-for(j in 1:k){
-  model.bestsub1 <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
-                       avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
-                       data = data.train.std.y[folds !=j,],
-                       nvmax =20)
-  for(i in 1:20) {
-    pred=predict.regsubsets(model.bestsub1, data.train.std.y[folds==j,], id=i)
-    cv.errors[j,i]=mean((data.train.std.y$damt[folds==j]-pred)^2)
-  }
-}
+set.seed(1)
+test.mat = model.matrix(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
+                          wrat + genf + avhv + incm + inca + plow + npro + tgif +
+                          lgif + rgif + tdon + tlag + agif, data.valid.std.y)
 
-mean.cv.errors <- apply(cv.errors, 2, mean)
-mean.cv.errors # M14 has smallest error -- 1.393280
+val.errors <- rep(NA,20)
+for (i in 1:20) {
+  coefi = coef(regfit.best, id=i)
+  pred = test.mat[,names(coefi)]%*%coefi
+  val.errors[i] = mean((y.valid - pred)^2)}
+val.errors
+which.min(val.errors) # 18
+coef(regfit.best,18)
 
-par(mfrow =c(1,1))
-plot(mean.cv.errors, type='b') # 14 variable model is best
+model.lin4 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + wrat +
+                   genf + incm + inca + plow + tgif + lgif + rgif + tdon + tlag + agif, 
+                 data.train.std.y)
+summary(model.lin4)
 
-best.model <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
-                           avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
-                         data = data.train.std.y,
-                         nvmax =20)
+# Run model on validation set.
+model.lin4.valid <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + wrat +
+                         genf + incm + inca + plow + tgif + lgif + rgif + tdon + tlag + agif, 
+                       data.valid.std.y)
+summary(model.lin4.valid)
 
-# Coefficient Estimates
-coef(best.model, 14)
-
-pred.valid.best.model <- predict.regsubsets(best.model, newdata = data.valid.std.y, id=14) # validation predictions
-mean((y.valid - pred.valid.best.model)^2) # mean prediction error
-# 1.558577
-sd((y.valid - pred.valid.best.model)^2)/sqrt(n.valid.y) # std error
-# 0.1606044
-
-yhat.test.bestsub <- predict.regsubsets(best.model, newdata = data.test.std, id=14) # test predictions
-#yhat.test.bestsub
-
-#  Error in model.frame.default(object, data, xlev = xlev) : 
-#variable lengths differ (found for 'reg1')
+# Make predictions for validation set based on model.
+pred.valid.lin4 <- predict(model.lin4, data.valid.std.y)
+MPE4 <- mean((y.valid - pred.valid.lin4)^2)
+StandardError4 <- sd((y.valid - pred.valid.lin4)^2)/sqrt(n.valid.y)
+MPE4 # 1.555443
+StandardError4 # 0.1611711
   
 #########################################
 #    MODEL 3: Principal Compoents       #
 #########################################
 
+set.seed(1)
+pcr.fit = pcr(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
+                wrat + genf + avhv + incm + inca + plow + npro + tgif +
+                lgif + rgif + tdon + tlag + agif, data = data.train.std.y,
+              scale = TRUE, validation = "CV")
+
+summary(pcr.fit)
+
+validationplot(pcr.fit, val.type = "MSEP", type = "b")
+
+# There is an drop in the graph at 5, and the lowest point is around 20.
+# The drop at 5 makes me think five components may be enough.
+
+set.seed(1)
+pcr.pred = predict(pcr.fit, data.valid.std.y, ncomp=5)
+
+MPE5 <- mean((y.valid - pcr.pred)^2)
+StandardError5 <- sd((y.valid - pcr.pred)^2)/sqrt(n.valid.y)
+
+MPE5 # 1.812705
+StandardError5 # 0.1688532
+
+#Use 15 components
+set.seed(1)
+pcr.pred2 = predict(pcr.fit, data.valid.std.y, ncomp=15)
+
+MPE6 <- mean((y.valid - pcr.pred2)^2)
+MPE6 # 1.598671
+
+StandardError6 <- sd((y.valid - pcr.pred2)^2)/sqrt(n.valid.y)
+StandardError6 # 0.1607489
+
+# Use 20 components
+set.seed(1)
+pcr.pred2 = predict(pcr.fit, data.valid.std.y, ncomp=20)
+
+MPE7 <- mean((y.valid - pcr.pred2)^2)
+MPE7 # 1.556378
+
+StandardError7 <- sd((y.valid - pcr.pred2)^2)/sqrt(n.valid.y)
+StandardError7 # 0.161215
+
+##
+# 5 components
+MPE5 # 1.812705
+StandardError5 # 0.1688532
+# 15 components
+MPE6 # 1.598671
+StandardError6 # 0.1607489
+# 20 components
+MPE7 # 1.556378
+StandardError7 # 0.161215
+
+# 20 components is best.  
+  
 #########################################
 #    MODEL 4: Partial Least Squares     #
 #########################################
 
+set.seed(1)
+pls.fit = plsr(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
+                 wrat + genf + avhv + incm + inca + plow + npro + tgif +
+                 lgif + rgif + tdon + tlag + agif, data = data.train.std.y,
+               scale = TRUE, validation = "CV") 
+
+summary(pls.fit)
+
+validationplot(pls.fit, val.type="MSEP", type = "b")
+# There is an drop in the graph at 3, with minimal reduction after.
+# The drop at 3 makes me think three components is enough.
+
+set.seed(1)
+pls.pred = predict(pls.fit, data.valid.std.y, ncomp=3)
+
+MPE8 <- mean((y.valid - pls.pred)^2)
+StandardError8 <- sd((y.valid - pls.pred)^2)/sqrt(n.valid.y)
+
+MPE8 # 1.592151
+StandardError8 # 0.1613484  
+  
 #########################################
 #    MODEL 5: Ridge Regression          #
 #########################################
 
-# This needs work. 
-  
-grid = 10^seq(10,-2, length = 100)
-ridge.fit0 = glmnet(x.train.std, data.train.std.y, alpha = 0, lambda = grid)
-# Error in glmnet(x.train.std, data.train.std.y, alpha = 0, lambda = grid) : 
-# number of observations in y (1995) not equal to the number of rows of x (3984)
-
-plot(ridge.fit0,xvar="lambda",label=T)
-
-k=10
 set.seed(1)
-cv.out <- cv.glmnet(x.train.std, data.train.std.y, alpha = 0)
 
-names(cv.out)
+grid = 10^seq(10, -2, length=100)
+mat.train <- data.matrix(data.train.std.y)
+mat.train <- mat.train[,-21]
+# Remove damt to so that the response is not on both sides of equation.
+
+ridge.mod = glmnet(mat.train, y.train, alpha=0, lambda=grid,
+                   thresh=1e-12)
+
+# Use cross-validation to choose lambda.
+set.seed(1)
+cv.out = cv.glmnet(mat.train, y.train, alpha=0)
 plot(cv.out)
-# example of how to interpret this plot: http://gerardnico.com/wiki/r/ridge_lasso
-names(cv.out)
 
-largelam <- cv.out$lambda.1se
-largelam # lambda = 
+bestlam = cv.out$lambda.min
+bestlam # 0.1252296
 
-ridge.fit <- glmnet(x.train.std, data.train.std.y,alpha=0,lambda=####)
+# Make predictions and compute errors.
+mat.valid = as.matrix(data.valid.std.y)
+mat.valid <- mat.valid[,-21]
 
-# Coefficient Estimates
-coef(ridge.fit)
+set.seed(1)
+ridge.pred = predict(ridge.mod, s=bestlam, newx=mat.valid)
 
-pred.valid.ridge <- predict(ridge.fit,newx = x.test.std) # validation predictions
-mean((y.valid - pred.valid.ridge)^2) # mean prediction error
-# 
-sd((y.valid - pred.valid.ridge)^2)/sqrt(n.valid.y) # std error
-# 
+MPE9 <- mean((y.valid - ridge.pred)^2)
+StandardError9 <- sd((y.valid - ridge.pred)^2)/sqrt(n.valid.y)
 
-yhat.test.ridge <- predict(ridge.fit, newdata = data.test.std) # test predictions
-#yhat.test  
+MPE9 # 1.572113
+StandardError9 # 0.1627705
   
 #########################################
 #    MODEL 6: Lasso Regression          #
 #########################################
 
+set.seed(1)
+
+# Use matrices and lambda grid created for ridge regression.
+lasso.mod = glmnet(mat.train, y.train, alpha=1, lambda=grid)
+
+# Use cross-validation to select lambda.
+set.seed(1)
+cv.out.lasso = cv.glmnet(mat.train, y.train, alpha=1)
+plot(cv.out.lasso)
+
+bestlamlasso = cv.out.lasso$lambda.min
+bestlamlasso # 0.005174504
+
+set.seed(1)
+lasso.pred = predict(lasso.mod, s=bestlamlasso, newx=mat.valid)
+
+MPE10 <- mean((y.valid - lasso.pred)^2)
+StandardError10 <- sd((y.valid - lasso.pred)^2)/sqrt(n.valid.y)
+
+MPE10 # 1.562046
+StandardError10 # 0.1611463
 
 #########################################
 # FINAL RESULTS                         #
