@@ -709,13 +709,13 @@ table(chat.valid.tree1, c.valid) # classification table
 #    MODEL 6a: DECISION TREE w/ subset  #
 #########################################
 
-model.tree1 <- tree(as.factor(donr) ~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
+model.tree2 <- tree(as.factor(donr) ~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
                       I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif
                     ,data=data.train.std.c)
-plot(model.tree1)
-text(model.tree1)
+plot(model.tree2)
+text(model.tree2)
 
-post.valid.tree0 <- predict(model.tree1,data.valid.std.c)
+post.valid.tree0 <- predict(model.tree2,data.valid.std.c)
 mean((as.numeric(as.character(post.valid.tree0[,2])) - c.valid)^2)
 # [1] 0.1072104
 
@@ -745,8 +745,36 @@ table(chat.valid.tree0, c.valid) # classification table
 #    MODEL 7: BOOSTS & RANDOM FOREST    #
 #########################################
 
+model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
+             mtry=13, ntree =25)
+
+post.valid.RF1 = predict(model.RF1,newdata = data.valid.std.c)
+
+mean((as.numeric(as.character(post.valid.RF1)) - c.valid)^2)
+#[1] 0.1149653
+
+varImpPlot(model.RF1)
+
+# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
+
+profit.RF1 <- cumsum(14.5*c.valid[order(post.valid.RF1, decreasing=T)]-2)
+plot(profit.RF1) # see how profits change as more mailings are made
+n.mail.valid <- which.max(profit.RF1)
+# 1055  11099.5
+table(post.valid.RF1,c.valid)
+#                c.valid
+# post.valid.RF1   0   1
+# 0              875  88
+# 1              144 911
+
+# check n.mail.valid = 144+911 = 1055
+# check profit = 14.5*911-2*1055 = 11099.5
+
+
 model.boost1 =gbm(donr~.,data=data.train.std.c, distribution="gaussian",n.trees =5000 , interaction.depth =4,shrinkage =0.2,
                   verbose =F)
+
+summary.gbm(model.boost1)
 
 post.valid.boost1 = predict(model.boost1,newdata = data.valid.std.c,n.trees =5000)
 
@@ -768,29 +796,6 @@ table(chat.valid.boost1, c.valid) # classification table
 # chat.valid.boost1   0   1
 #                 0 689  21
 #                 1 330 978
-
-model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
-             mtry=13, ntree =25)
-
-post.valid.RF1 = predict(model.RF1,newdata = data.valid.std.c)
-
-mean((as.numeric(as.character(post.valid.RF1)) - c.valid)^2)
-#[1] 0.1149653
-
-# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
-
-profit.RF1 <- cumsum(14.5*c.valid[order(post.valid.RF1, decreasing=T)]-2)
-plot(profit.RF1) # see how profits change as more mailings are made
-n.mail.valid <- which.max(profit.RF1)
-# 1055  11099.5
-table(post.valid.RF1,c.valid)
-#                c.valid
-# post.valid.RF1   0   1
-# 0              875  88
-# 1              144 911
-
-# check n.mail.valid = 144+911 = 1055
-# check profit = 14.5*911-2*1055 = 11099.5
 
 #########################################
 #    MODEL 8: Support Vector Machine    #
