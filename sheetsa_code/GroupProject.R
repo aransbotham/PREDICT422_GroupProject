@@ -40,6 +40,7 @@ set.seed(1)
 
 #Install Packages if they don't current exist on this machine
 list.of.packages <- c("doBy"
+                      ,"lazyeval"
                       ,"psych"
                       ,"lars"
                       ,"GGally"
@@ -61,36 +62,12 @@ list.of.packages <- c("doBy"
                       ,"doParallel"
                       ,"iterators"
                       ,"foreach"
-                      ,"parallel"
-                      ,"pls")
+                      ,"parallel")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
-library(doBy)
-library(psych)
-library(lars)
-library(GGally)
-library(ggplot2)
-library (gridExtra)
-library(corrgram)
-library(corrplot)
-library(leaps)
-library(glmnet)
-library(MASS)
-library(gbm)
-library(tree)
-library(rpart)
-library(rpart.plot)
-library(gam)
-library(class)
-library(e1071)
-library(randomForest)
-library(doParallel)
-library(iterators)
-library(foreach)
-library(parallel)
-library(pls)
-
+#Load all packages
+lapply(list.of.packages, require, character.only = TRUE)
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
@@ -122,7 +99,7 @@ do.call("grid.arrange", c(plots))
 
 #There is no missing data
 #Some variables are heavily skewed in one direction
-#Some variable are bimodal
+#Some variables are bimodal
 
 ##Transform some variables
 charity.t <- data
@@ -172,7 +149,7 @@ significant.correlations <- significant.correlations[order(abs(significant.corre
 significant.correlations <- significant.correlations[which(!duplicated(significant.correlations$corr)),]
 significant.correlations
 
-##Results with tgif transformed:
+##Results:
 #var1 var2       corr
 #24 damt donr  0.9817018
 #15 tgif npro  0.8734276
@@ -223,12 +200,15 @@ significant2
 
 ##some multi-collinearity present between variables, should be kept in mind for further analysis
 
-##Visualize this
+##Visualize correlations
 corrgram(charity.t, order=TRUE, lower.panel=panel.shade,
          upper.panel=panel.pie, text.panel=panel.txt,
          main="Correlations")
 
 corrplot(M, method = "square") #plot matrix
+
+##If we install pls earlier, then the corrplot function doesn't work properly.
+library(pls)
 
 # set up data for analysis
 
@@ -278,10 +258,10 @@ do.call("grid.arrange", c(plots3))
 #########################################################################################
 
 #########################################
-#    MODEL 1: Logistic                  #
+#    MODEL 1: Logistic: Full model      #
 #########################################
 set.seed(1)
-model.log1 <- glm(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
+model.log1 <- glm(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
                     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
                   data.train.std.c, family=binomial("logit"))
 
@@ -294,17 +274,107 @@ profit.log1 <- cumsum(14.5*c.valid[order(post.valid.log1, decreasing=T)]-2)
 plot(profit.log1) # see how profits change as more mailings are made
 n.mail.valid1 <- which.max(profit.log1) # number of mailings that maximizes profits
 c(n.mail.valid1, max(profit.log1)) # report number of mailings and maximum profit
-#[1]  1330 11637
+#[1]  1397 11387
 
 cutoff.log1 <- sort(post.valid.log1, decreasing=T)[n.mail.valid1+1] # set cutoff based on n.mail.valid
 chat.valid.log1 <- ifelse(post.valid.log1>cutoff.log1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.log1, c.valid) # classification table
 #                 c.valid
 # chat.valid.log1   0   1
-#               0 675  13
-#               1 344 986
-# check n.mail.valid = 344+986 = 1330
-# check profit = 14.5*986-2*1330 = 11637
+#               0 600  21
+#               1 419 978
+# check n.mail.valid = 419+978 = 1397
+# check profit = 14.5*978-2*1397 = 11387
+
+##########################################
+# Model 1a: Logistic w/ significant only #        
+##########################################
+
+#use only those variables found to be significant
+set.seed(1)
+model.log1a <- glm(donr ~ reg1 + reg3 + reg4 + home + chld + avhv + inca + plow + npro + lgif + agif,
+                   data.train.std.c, family=binomial("logit"))
+
+post.valid.log1a <- predict(model.log1a, data.valid.std.c, type="response") # n.valid post probs
+
+# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
+
+profit.log1a <- cumsum(14.5*c.valid[order(post.valid.log1a, decreasing=T)]-2)
+plot(profit.log1a) # see how profits change as more mailings are made
+n.mail.valid1a <- which.max(profit.log1a) # number of mailings that maximizes profits
+c(n.mail.valid1a, max(profit.log1a)) # report number of mailings and maximum profit
+#[1]  1583 11073
+
+cutoff.log1a <- sort(post.valid.log1a, decreasing=T)[n.mail.valid1a+1] # set cutoff based on n.mail.valid
+chat.valid.log1a <- ifelse(post.valid.log1a>cutoff.log1a, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.log1a, c.valid) # classification table
+#                 c.valid
+#chat.valid.log1a   0   1
+#               0 418  17
+#               1 601 982
+#601+982=1583
+#14.5*982-2*1583=11073
+
+#Resulting model is not more profitable than Full Model
+
+
+##########################################
+# Model 1b: Logistic backward selection  #        
+##########################################
+#Try logistic model with additional terms & backward selection
+
+set.seed(1)
+model.log1b <- glm(donr~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + I(wrat^2)
+                   + avhv + incm + I(incm^2) + inca + I(inca^2) + plow + npro + tgif + I(tgif^2) + lgif +I(lgif^2)
+                   + rgif + I(rgif^2) + tdon + tlag + agif + I(agif^2),data.train.std.c, family=binomial("logit"))
+
+post.valid.log1b <- predict(model.log1b, data.valid.std.c, type="response") # n.valid post probs
+
+profit.log1b <- cumsum(14.5*c.valid[order(post.valid.log1b, decreasing=T)]-2)
+plot(profit.log1b) # see how profits change as more mailings are made
+n.mail.valid1b <- which.max(profit.log1b) # number of mailings that maximizes profits
+c(n.mail.valid1b, max(profit.log1b)) # report number of mailings and maximum profit
+#[1]  1330 11637
+
+cutoff.log1b <- sort(post.valid.log1b, decreasing=T)[n.mail.valid1b+1] # set cutoff based on n.mail.valid
+chat.valid.log1b <- ifelse(post.valid.log1b>cutoff.log1b, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.log1b, c.valid) # classification table
+
+#                  c.valid
+# chat.valid.log1b   0   1
+#                0 675  13
+#                1 344 986
+
+#Use backward subset selection on model.log1b
+regfit.model1b.bwd<-regsubsets(donr~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + I(wrat^2)
+                               + avhv + incm + I(incm^2) + inca + I(inca^2) + plow + npro + tgif + I(tgif^2) + lgif +I(lgif^2)
+                               + rgif + I(rgif^2) + tdon + tlag + agif + I(agif^2),data=data.train.std.c,nvmax=30,
+                               method="backward")
+summary(regfit.model1b.bwd)
+
+#Create another logistic model using only the top 20 variables from the backward subset selection results
+model.log1b_r1<-glm(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
+                      I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
+                    data.train.std.c, family=binomial("logit"))
+
+post.valid.log1b_r1 <- predict(model.log1b_r1, data.valid.std.c, type="response") # n.valid post probs
+
+profit.log1b_r1 <- cumsum(14.5*c.valid[order(post.valid.log1b_r1, decreasing=T)]-2)
+plot(profit.log1b_r1) # see how profits change as more mailings are made
+n.mail.valid1b_r1 <- which.max(profit.log1b_r1) # number of mailings that maximizes profits
+c(n.mail.valid1b_r1, max(profit.log1b_r1)) # report number of mailings and maximum profit
+#[1]  1302.0 11649.5
+
+cutoff.log1b_r1 <- sort(post.valid.log1b_r1, decreasing=T)[n.mail.valid1b_r1+1] # set cutoff based on n.mail.valid
+chat.valid.log1b_r1 <- ifelse(post.valid.log1b_r1>cutoff.log1b, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.log1b_r1, c.valid) # classification table
+
+#                     c.valid
+# chat.valid.log1b_r1   0   1
+#                   0 670  14
+#                   1 349 985
+
+#20 variable logistic model (model.log1b_r1) is most profitable . 
 
 #########################################
 #    MODEL 2: Logistic GAM              #
@@ -329,10 +399,39 @@ chat.valid.gam1 <- ifelse(post.valid.gam1>cutoff.log1, 1, 0) # mail to everyone 
 table(chat.valid.gam1, c.valid) # classification table
 #                 c.valid
 # chat.valid.gam1   0   1
-#               0 576  20
-# 1               443 979
-# check n.mail.valid = 443+979 = 1422
-# check profit = 14.5*979-2*1422 = 11351.5 # This doesn't equal 11389...
+#               0 597  21
+# 1               422 978
+# check n.mail.valid = 422+978 = 1400
+# check profit = 14.5*978-2*1400 = 11381 # This doesn't equal 11389...
+
+##########################################
+#    MODEL 2a: Logistic GAM w/ best vars #
+##########################################
+
+#Run logistic GAM model with 20 variables from best subset selection in previous section
+model.gam2a=gam(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
+                  I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif, family=binomial,
+                data=data.train.std.c)
+post.valid.gam2a <- predict(model.gam2a, data.valid.std.c, type="response") # n.valid post probs
+
+# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
+
+profit.gam2a <- cumsum(14.5*c.valid[order(post.valid.gam2a, decreasing=T)]-2)
+plot(profit.gam2a) # see how profits change as more mailings are made
+n.mail.valid2a <- which.max(profit.gam2a) # number of mailings that maximizes profits
+c(n.mail.valid2a, max(profit.gam2a)) # report number of mailings and maximum profit
+# 1302.0 11649.5
+cutoff.gam2a <- sort(post.valid.gam2a, decreasing=T)[n.mail.valid2a+1] # set cutoff based on n.mail.valid
+chat.valid.gam2a <- ifelse(post.valid.gam2a>cutoff.gam2a, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.gam2a, c.valid)
+#                 c.valid
+#chat.valid.gam2a   0   1
+#               0 700  16
+#               1 319 983
+#319+983=1302
+#14.5*983-2*1302=11649.5
+
+#Model model.gam2a more profitable
 
 #########################################
 #    MODEL 3: LDA                       #
@@ -340,7 +439,7 @@ table(chat.valid.gam1, c.valid) # classification table
 set.seed(1)
 model.lda1 <- lda(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
                     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
-                  data.train.std.c) # include additional terms on the fly using I()
+                  data.train.std.c) 
 
 # Note: strictly speaking, LDA should not be used with qualitative predictors,
 # but in practice it often is if the goal is simply to find a good predictive model
@@ -365,15 +464,47 @@ table(chat.valid.lda1, c.valid) # classification table
 # check n.mail.valid = 372 + 991 = 1363
 # check profit = 14.5*991-2*1363 = 11643.5
 
+
+#########################################
+#    MODEL 3a: LDA with subset of vars  #
+#########################################
+#Run another LDA model with 20 best subset selection variables from first section
+model.lda3a <- lda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
+                     I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif, 
+                   data.train.std.c) # include additional terms on the fly using I()
+
+# Note: strictly speaking, LDA should not be used with qualitative predictors,
+# but in practice it often is if the goal is simply to find a good predictive model
+
+post.valid.lda3a <- predict(model.lda3a, data.valid.std.c)$posterior[,2] # n.valid.c post probs
+
+# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
+
+profit.lda3a <- cumsum(14.5*c.valid[order(post.valid.lda3a, decreasing=T)]-2)
+plot(profit.lda3a) # see how profits change as more mailings are made
+n.mail.valid3a <- which.max(profit.lda3a) # number of mailings that maximizes profits
+c(n.mail.valid3a, max(profit.lda3a)) # report number of mailings and maximum profit
+# 1336.0 11639.5
+
+cutoff.lda3a <- sort(post.valid.lda3a, decreasing=T)[n.mail.valid3a+1] # set cutoff based on n.mail.valid
+chat.valid.lda3a <- ifelse(post.valid.lda3a>cutoff.lda3a, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.lda3a, c.valid)
+#                 c.valid
+#chat.valid.lda3a   0   1
+#               0 670  12
+#               1 349 987
+#349+987=1336
+#14.5*987-2*1336=11639.5
+
+#Model 3 marginally more profitable than Model 3a
+
+
 #########################################
 #    MODEL 4: QDA                       #
 #########################################
 
 model.qda1 =qda(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
               avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif,data= data.train.std.c)
-
-# Note: strictly speaking, LDA should not be used with qualitative predictors,
-# but in practice it often is if the goal is simply to find a good predictive model
 
 post.valid.qda1 <- predict(model.qda1, data.valid.std.c)$posterior[,2] # n.valid.c post probs
 
@@ -394,6 +525,40 @@ table(chat.valid.qda1, c.valid) # classification table
 #               1 429 967
 # check n.mail.valid = 429+967 = 1396
 # check profit = 14.5*967-2*1396 = 11229.5
+
+
+#########################################
+#    MODEL 4: QDA with subset of vars   #
+#########################################
+
+model.qda4a =qda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
+                   I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
+                 data= data.train.std.c)
+
+# Note: strictly speaking, LDA should not be used with qualitative predictors,
+# but in practice it often is if the goal is simply to find a good predictive model
+
+post.valid.qda4a <- predict(model.qda4a, data.valid.std.c)$posterior[,2] # n.valid.c post probs
+
+# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
+
+profit.qda4a <- cumsum(14.5*c.valid[order(post.valid.qda4a, decreasing=T)]-2)
+plot(profit.qda4a) # see how profits change as more mailings are made
+n.mail.valid4a <- which.max(profit.qda4a) # number of mailings that maximizes profits
+c(n.mail.valid4a, max(profit.qda4a)) # report number of mailings and maximum profit
+# 1421 11107
+
+cutoff.qda4a <- sort(post.valid.qda4a, decreasing=T)[n.mail.valid4a+1] # set cutoff based on n.mail.valid
+chat.valid.qda4a <- ifelse(post.valid.qda4a>cutoff.qda4a, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.qda4a, c.valid) # classification table
+#               c.valid
+#chat.valid.qda4a   0   1
+#               0 560  37
+#               1 459 962
+#459+962=1421
+#14.5*964-2*1421=11136
+
+#Model 4a performed significantly worse than Model 4.
 
 #########################################
 #    MODEL 5: KNN                       #
@@ -421,6 +586,60 @@ mean((as.numeric(as.character(model.knn1)) - c.valid)^2)
 # check n.mail.valid = 281+835 = 1116
 # check profit = 14.5*835-2*1116 = 9875.5
 
+
+#########################################
+#    MODEL 5a: KNN                      #
+#########################################
+#Set K=10 for KNN model 5a
+set.seed(1)
+model.knn5a=knn(x.train.std,x.valid.std,c.train,k=10)
+mean(c.valid != model.knn5a)
+# [1] 0.1828543
+
+table(model.knn5a ,c.valid)
+#           c.valid
+#model.knn5a   0   1
+#           0 709  59
+#           1 310 940
+
+
+profit.knn5a <- cumsum(14.5*c.valid[order(model.knn5a, decreasing=T)]-2)
+plot(profit.knn5a) # see how profits change as more mailings are made
+
+mean((as.numeric(as.character(model.knn5a)) - c.valid)^2)
+#0.1828543
+
+# check n.mail.valid = 310+940 = 1250
+# check profit = 14.5*940-2*1250 = 11130
+
+
+#Model with K=10 more profitable than K=1
+
+#########################################
+#    MODEL 5b: KNN                      #
+#########################################
+#Set K=100 for KNN model 5b
+set.seed(1)
+model.knn5b=knn(x.train.std,x.valid.std,c.train,k=100)
+mean(c.valid != model.knn5b)
+# [1] 0.2215064
+
+table(model.knn5b ,c.valid)
+#             c.valid
+#model.knn5b   0   1
+#           0 600  28
+#           1 419 971
+#419+971=1390
+#14.5*971-2*1390=11299.5
+
+profit.knn5b <- cumsum(14.5*c.valid[order(model.knn5b, decreasing=T)]-2)
+plot(profit.knn5b) # see how profits change as more mailings are made
+
+mean((as.numeric(as.character(model.knn5b)) - c.valid)^2)
+# [1] 0.2215064
+
+#Model 5b is most profitable, but may overfit the data
+
 #########################################
 #    MODEL 6: DECISION TREE             #
 #########################################
@@ -436,7 +655,7 @@ mean((as.numeric(as.character(post.valid.tree0[,2])) - c.valid)^2)
 profit.tree0 <- cumsum(14.5*c.valid[order(post.valid.tree0[,2], decreasing=T)]-2)
 plot(profit.tree0) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.tree0)
-# [1] 1362
+# [1] 1362 11413.5
 
 cutoff.tree0 <- sort(post.valid.tree0[,2], decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.tree0 <- ifelse(post.valid.tree0[,2] > cutoff.tree0, 1, 0) # mail to everyone above the cutoff
@@ -470,6 +689,7 @@ mean((as.numeric(as.character(post.valid.tree1[,2])) - c.valid)^2)
 profit.tree1 <- cumsum(14.5*c.valid[order(post.valid.tree1[,2], decreasing=T)]-2)
 plot(profit.tree0) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.tree1)
+# [1] 1362 11413.5
 
 cutoff.tree1 <- sort(post.valid.tree1[,2], decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.tree1 <- ifelse(post.valid.tree1[,2] > cutoff.tree1, 1, 0) # mail to everyone above the cutoff
@@ -483,7 +703,43 @@ table(chat.valid.tree1, c.valid) # classification table
 # check n.mail.valid = 352+967 = 1319
 # check profit = 14.5*967-2*1319 = 11383.5
 
-##It's all the same... 
+##Pruned and unpruned tree are the same
+
+#########################################
+#    MODEL 6a: DECISION TREE w/ subset  #
+#########################################
+
+model.tree1 <- tree(as.factor(donr) ~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
+                      I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif
+                    ,data=data.train.std.c)
+plot(model.tree1)
+text(model.tree1)
+
+post.valid.tree0 <- predict(model.tree1,data.valid.std.c)
+mean((as.numeric(as.character(post.valid.tree0[,2])) - c.valid)^2)
+# [1] 0.1072104
+
+profit.tree0 <- cumsum(14.5*c.valid[order(post.valid.tree0[,2], decreasing=T)]-2)
+plot(profit.tree0) # see how profits change as more mailings are made
+n.mail.valid <- which.max(profit.tree0)
+# [1]  1487 11381
+
+cutoff.tree0 <- sort(post.valid.tree0[,2], decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
+chat.valid.tree0 <- ifelse(post.valid.tree0[,2] > cutoff.tree0, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.tree0, c.valid) # classification table
+# 
+#                  c.valid
+# chat.valid.tree0   0   1
+#                0 617  28
+#                1 402 971
+
+# check n.mail.valid = 402+971 = 1373
+
+##I have noticed that with trees, since groups of observations are less than a given point
+#### this won't align with the actual n.mail.valid
+# check profit = 14.5*971-2*1373 = 11333.5
+
+##Tree using all variables performs better than tree using the subset
 
 #########################################
 #    MODEL 7: BOOSTS & RANDOM FOREST    #
@@ -495,7 +751,23 @@ model.boost1 =gbm(donr~.,data=data.train.std.c, distribution="gaussian",n.trees 
 post.valid.boost1 = predict(model.boost1,newdata = data.valid.std.c,n.trees =5000)
 
 mean((post.valid.boost1 - c.valid)^2)
-# [1] 0.1179965
+# [1] 0.1203144
+
+# calculate ordered profit function using average donation = $14.50 and mailing cost = $2
+
+profit.boost1 <- cumsum(14.5*c.valid[order(post.valid.boost1, decreasing=T)]-2)
+plot(profit.boost1) # see how profits change as more mailings are made
+n.mail.valid <- which.max(profit.boost1)
+# 1308 11565
+
+cutoff.boost1 <- sort(post.valid.boost1, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
+chat.valid.boost1 <- ifelse(post.valid.boost1 > cutoff.boost1, 1, 0) # mail to everyone above the cutoff
+table(chat.valid.boost1, c.valid) # classification table
+
+#                   c.valid
+# chat.valid.boost1   0   1
+#                 0 689  21
+#                 1 330 978
 
 model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
              mtry=13, ntree =25)
@@ -503,22 +775,22 @@ model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
 post.valid.RF1 = predict(model.RF1,newdata = data.valid.std.c)
 
 mean((as.numeric(as.character(post.valid.RF1)) - c.valid)^2)
-# [1]  0.1159564
+#[1] 0.1149653
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
 
 profit.RF1 <- cumsum(14.5*c.valid[order(post.valid.RF1, decreasing=T)]-2)
 plot(profit.RF1) # see how profits change as more mailings are made
-
-
+n.mail.valid <- which.max(profit.RF1)
+# 1055  11099.5
 table(post.valid.RF1,c.valid)
 #                c.valid
-#post.valid.RF1   0   1
-#             0 879  94
-#             1 140 905
+# post.valid.RF1   0   1
+# 0              875  88
+# 1              144 911
 
-# check n.mail.valid = 140+905 = 1045
-# check profit = 14.5*905-2*1045 = 11032.5
+# check n.mail.valid = 144+911 = 1055
+# check profit = 14.5*911-2*1055 = 11099.5
 
 #########################################
 #    MODEL 8: Support Vector Machine    #
@@ -580,17 +852,27 @@ table(chat.valid.svm, c.valid) # classification table
 # Results
 
 # n.mail Profit  Model
-# 1388   11587.5 LDA1
-# 1330   11637   Log1 -- the best model!
-# 1422   11311.5 GAM1
-# 1396   11229.5 QDA
+# 1397   11387   Log1
+# 1583   11073   Log 1a
+# 1302.0 11649.5 Log 1b
+# 1396   11389   Log GAM1
+# 1302.0 11649.5 Log GAM1a
+# 1363   11642.5 LDA1
+# 1336.0 11639.5 LDA1a
+# 1396.0 11229.5 QDA
+# 1421   11107   QDA1a
 # 1116   9875.5  KNN
-# 1319   11383.5 Unaltered Tree
-# 1030   10961   RF
+# 1250   11130   KNN1a
+# 1390   11299.5 KNN1b
+# 1362   11413.5 Unaltered Tree & Pruned Tree
+# 1487   11381   Tree with subset vars
+# 1308   11565   Boosted Tree
+# 1055   11099.5 RF
 # 1925   10534   Linear SVM (untuned)
 # 1444   11336.5 Radial SVM (tuned)
 
 ##Logistic is the best!  Most profit.
+## should use this model object for test set predictions: model.log1b_r1
 
 #########################################################################################
 #Question 3 -- Prediction Models for DAMT                                               #
