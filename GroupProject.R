@@ -387,8 +387,8 @@ exp(coef(model.log1b_r1))
 exp(cbind(OR = coef(model.log1b_r1), confint(model.log1b_r1)))
 
 #Odds Ratio
-# OR      2.5 %    97.5 %
-#   (Intercept) 2.50563242 1.99943688 3.1502925
+#               OR        2.5 %     97.5 %
+# (Intercept) 2.50563242 1.99943688 3.1502925
 # reg1        1.92965236 1.71062680 2.1824684
 # reg2        4.47780623 3.89212895 5.1787041
 # home        4.01570777 3.41327149 4.7613630
