@@ -1151,6 +1151,7 @@ StandardError8 <- sd((y.valid - pls.pred)^2)/sqrt(n.valid.y)
 
 MPE8 # 1.592151
 StandardError8 # 0.1613484  
+
   
 #########################################
 #    MODEL 5: Ridge Regression          #
@@ -1187,6 +1188,28 @@ StandardError9 <- sd((y.valid - ridge.pred)^2)/sqrt(n.valid.y)
 MPE9 # 1.572113
 StandardError9 # 0.1627705
   
+ridge.coef= coef(ridge.mod,s=bestlam)
+# (Intercept) 14.22344033
+# reg1        -0.06495925
+# reg2        -0.12240428
+# reg3         0.28014764
+# reg4         0.58541542
+# home         0.20548728
+# chld        -0.54971631
+# hinc         0.47980195
+# genf        -0.05763863
+# wrat         0.01231801
+# avhv        -0.01751383
+# incm         0.30239430
+# inca         0.06359597
+# plow         0.30357092
+# npro         0.02575266
+# tgif         0.16534000
+# lgif         0.39461843
+# rgif         0.44561459
+# tdon         0.07087720
+# tlag         0.02834013
+# agif         0.38205327
 #########################################
 #    MODEL 6: Lasso Regression          #
 #########################################
@@ -1213,6 +1236,28 @@ StandardError10 <- sd((y.valid - lasso.pred)^2)/sqrt(n.valid.y)
 MPE10 # 1.562046
 StandardError10 # 0.1611463
 
+lasso.coef= coef(lasso.mod,s=bestlam)
+# (Intercept) 14.338428658
+# reg1         .          
+# reg2        -0.051092397
+# reg3         0.203743788
+# reg4         0.525828946
+# home         .          
+# chld        -0.430556714
+# hinc         0.338995574
+# genf         .          
+# wrat         .          
+# avhv         .          
+# incm         0.005835249
+# inca         .          
+# plow         .          
+# npro         .          
+# tgif         0.076711998
+# lgif         0.380005233
+# rgif         0.399168041
+# tdon         .          
+# tlag         .          
+# agif         0.332079318
 #########################################
 # FINAL RESULTS                         #
 #########################################
