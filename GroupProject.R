@@ -531,6 +531,11 @@ table(chat.valid.lda3a, c.valid)
 
 #Model 3 marginally more profitable than Model 3a
 
+##Plot LDA?
+png("./plots", width=10000, height=10000, pointsize=12)
+partimat(as.factor(donr) ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
+           +     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif,data=data.train.std.c,method="lda")
+
 
 #########################################
 #    MODEL 4: QDA                       #
