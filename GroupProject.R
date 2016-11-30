@@ -1071,6 +1071,11 @@ for (i in 1:20) {
 val.errors
 which.min(val.errors) # 18
 coef(regfit.best,18)
+  
+# create plot
+par(mfrow =c(1,1))
+plot(val.errors, xlab="Number of Variables", type='b')
+points (18,val.errors[18], col = "red",cex = 1, pch = 20)
 
 model.lin4 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + wrat +
                    genf + incm + inca + plow + tgif + lgif + rgif + tdon + tlag + agif, 
@@ -1091,7 +1096,7 @@ MPE4 # 1.555443
 StandardError4 # 0.1611711
   
 #########################################
-#    MODEL 3: Principal Compoents       #
+#    MODEL 3: Principal Components       #
 #########################################
 
 set.seed(1)
@@ -1101,8 +1106,8 @@ pcr.fit = pcr(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
               scale = TRUE, validation = "CV")
 
 summary(pcr.fit)
-
-validationplot(pcr.fit, val.type = "MSEP", type = "b")
+  
+validationplot(pcr.fit, val.type = "MSEP", type = "b", pch=20, col="black")
 
 # There is an drop in the graph at 5, and the lowest point is around 20.
 # The drop at 5 makes me think five components may be enough.
