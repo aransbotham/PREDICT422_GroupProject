@@ -812,7 +812,29 @@ table(post.valid.RF1,c.valid)
 model.boost1 =gbm(donr~.,data=data.train.std.c, distribution="gaussian",n.trees =5000 , interaction.depth =4,shrinkage =0.2,
                   verbose =F)
 
+#produce plot of relative influence
 summary.gbm(model.boost1)
+# var    rel.inf
+# chld chld 16.4728955
+# agif agif  9.1065005
+# avhv avhv  8.0688407
+# tgif tgif  7.8933570
+# hinc hinc  6.8809433
+# incm incm  6.2528839
+# npro npro  6.2242510
+# inca inca  5.0164309
+# wrat wrat  4.8032304
+# tdon tdon  4.5479742
+# lgif lgif  4.1767537
+# plow plow  4.1053603
+# reg2 reg2  4.0291227
+# rgif rgif  3.9076988
+# home home  3.2108499
+# tlag tlag  3.1093268
+# reg1 reg1  1.0410513
+# genf genf  0.4875844
+# reg3 reg3  0.3330307
+# reg4 reg4  0.3319141
 
 post.valid.boost1 = predict(model.boost1,newdata = data.valid.std.c,n.trees =5000)
 
