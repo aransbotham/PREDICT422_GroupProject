@@ -69,7 +69,7 @@ if(length(new.packages)) install.packages(new.packages)
 #Load all packages
 lapply(list.of.packages, require, character.only = TRUE)
 
-# Load the diabetes data
+# Load the charity data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
 colnames(data) <- gsub("X.","",colnames(data))
 
