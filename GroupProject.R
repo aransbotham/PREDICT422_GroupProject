@@ -783,6 +783,7 @@ table(chat.valid.tree0, c.valid) # classification table
 #    MODEL 7: BOOSTS & RANDOM FOREST    #
 #########################################
 
+set.seed(1)
 model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
              mtry=13, ntree =25)
 
@@ -798,55 +799,55 @@ varImpPlot(model.RF1)
 profit.RF1 <- cumsum(14.5*c.valid[order(post.valid.RF1, decreasing=T)]-2)
 plot(profit.RF1) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.RF1)
-# 1055  11099.5
+# 1040  11028
 table(post.valid.RF1,c.valid)
 #                c.valid
 # post.valid.RF1   0   1
-# 0              875  88
-# 1              144 911
+# 0              883  95
+# 1              136 904
 
-# check n.mail.valid = 144+911 = 1055
-# check profit = 14.5*911-2*1055 = 11099.5
+# check n.mail.valid = 136+904 = 1040
+# check profit = 14.5*904-2*1040 = 11028
 
-
+set.seed(1)
 model.boost1 =gbm(donr~.,data=data.train.std.c, distribution="gaussian",n.trees =5000 , interaction.depth =4,shrinkage =0.2,
                   verbose =F)
 
 #produce plot of relative influence
 summary.gbm(model.boost1)
-# var    rel.inf
-# chld chld 16.4728955
-# agif agif  9.1065005
-# avhv avhv  8.0688407
-# tgif tgif  7.8933570
-# hinc hinc  6.8809433
-# incm incm  6.2528839
-# npro npro  6.2242510
-# inca inca  5.0164309
-# wrat wrat  4.8032304
-# tdon tdon  4.5479742
-# lgif lgif  4.1767537
-# plow plow  4.1053603
-# reg2 reg2  4.0291227
-# rgif rgif  3.9076988
-# home home  3.2108499
-# tlag tlag  3.1093268
-# reg1 reg1  1.0410513
-# genf genf  0.4875844
-# reg3 reg3  0.3330307
-# reg4 reg4  0.3319141
+#var    rel.inf
+#chld chld 16.5050114
+#agif agif  9.0830404
+#avhv avhv  7.7627473
+#tgif tgif  7.6615290
+#hinc hinc  6.6249256
+#npro npro  6.6128775
+#incm incm  6.1582047
+#inca inca  5.4056824
+#tdon tdon  4.4863957
+#plow plow  4.3549452
+#lgif lgif  4.3471496
+#wrat wrat  4.2586813
+#reg2 reg2  4.1002435
+#rgif rgif  3.9026428
+#home home  3.5211727
+#tlag tlag  3.2892911
+#reg1 reg1  0.9795926
+#genf genf  0.4274159
+#reg3 reg3  0.2622024
+#reg4 reg4  0.2562489
 
 post.valid.boost1 = predict(model.boost1,newdata = data.valid.std.c,n.trees =5000)
 
 mean((post.valid.boost1 - c.valid)^2)
-# [1] 0.1203144
+# [1] 0.1198942
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
 
 profit.boost1 <- cumsum(14.5*c.valid[order(post.valid.boost1, decreasing=T)]-2)
 plot(profit.boost1) # see how profits change as more mailings are made
 n.mail.valid <- which.max(profit.boost1)
-# 1308 11565
+# 1344 11594.5
 
 cutoff.boost1 <- sort(post.valid.boost1, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
 chat.valid.boost1 <- ifelse(post.valid.boost1 > cutoff.boost1, 1, 0) # mail to everyone above the cutoff
@@ -854,8 +855,11 @@ table(chat.valid.boost1, c.valid) # classification table
 
 #                   c.valid
 # chat.valid.boost1   0   1
-#                 0 689  21
-#                 1 330 978
+#                 0 660  14
+#                 1 359 985
+
+# check n.mail.valid = 359+985 = 1344
+# check profit = 14.5*985-2*1344 = 11594.5
 
 #########################################
 #    MODEL 8: Support Vector Machine    #
@@ -865,6 +869,7 @@ library(doParallel)
 cl <- makeCluster(detectCores()) 
 registerDoParallel(cl)
 
+set.seed(1)
 model.svm =svm(donr~., data=data.train.std.c, kernel ="linear", cost =1e5)
 summary(model.svm)
 plot(model.svm , data.train.std.c$donr)
