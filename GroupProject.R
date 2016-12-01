@@ -532,10 +532,10 @@ table(chat.valid.lda3a, c.valid)
 #Model 3 marginally more profitable than Model 3a
 
 ##Plot LDA?
-png("./plots", width=10000, height=10000, pointsize=12)
-partimat(as.factor(donr) ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
-           +     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif,data=data.train.std.c,method="lda")
-
+# png("./plots", width=10000, height=10000, pointsize=12)
+# partimat(as.factor(donr) ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + I(hinc^2) + genf + wrat + 
+#            +     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif,data=data.train.std.c,method="lda")
+# 
 
 #########################################
 #    MODEL 4: QDA                       #
@@ -568,7 +568,7 @@ table(chat.valid.qda1, c.valid) # classification table
 #########################################
 #    MODEL 4: QDA with subset of vars   #
 #########################################
-
+set.seed(1)
 model.qda4a =qda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
                    I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
                  data= data.train.std.c)
@@ -681,7 +681,7 @@ mean((as.numeric(as.character(model.knn5b)) - c.valid)^2)
 #########################################
 #    MODEL 6: DECISION TREE             #
 #########################################
-
+set.seed(1)
 model.tree1 <- tree(as.factor(donr) ~ .,data=data.train.std.c)
 plot(model.tree1)
 text(model.tree1)
@@ -746,7 +746,7 @@ table(chat.valid.tree1, c.valid) # classification table
 #########################################
 #    MODEL 6a: DECISION TREE w/ subset  #
 #########################################
-
+set.seed(1)
 model.tree2 <- tree(as.factor(donr) ~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
                       I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif
                     ,data=data.train.std.c)
@@ -790,8 +790,9 @@ model.RF1 <- randomForest(as.factor(donr)~.,data=data.train.std.c ,
 post.valid.RF1 = predict(model.RF1,newdata = data.valid.std.c)
 
 mean((as.numeric(as.character(post.valid.RF1)) - c.valid)^2)
-#[1] 0.1149653
+#[1] 0.1144698
 
+par(mfrow=c(1,1))
 varImpPlot(model.RF1)
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
@@ -881,18 +882,19 @@ plot(profit.svm1) # see how profits change as more mailings are made
 
 n.mail.valid <- which.max(profit.svm1)
 c(n.mail.valid, max(profit.svm1))
+# [1]  2013.0 10459.5
 
-cutoff.svm <- sort(post.valid.svm, decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
-chat.valid.svm <- ifelse(post.valid.svm > cutoff.svm, 1, 0) # mail to everyone above the cutoff
+cutoff.svm <- sort(post.valid.svm,decreasing=T)[n.mail.valid+1] # set cutoff based on n.mail.valid
+chat.valid.svm <- ifelse(post.valid.svm >= cutoff.svm, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.svm, c.valid) # classification table
 
-#                c.valid
-# chat.valid.svm   0   1
-#              0  86   7
-#              1 933 992
+#                  c.valid
+# chat.valid.svm    0    1
+# 0                 3    1
+# 1              1016  998
 
-# check n.mail.valid = 933+992 = 1925
-# check profit = 14.5*992-2*1925 = 10534
+# check n.mail.valid = 1016+998 = 2014
+# check profit = 14.5*998-2*2014 = 10443
 
 set.seed(1)
 svm.tune=tune(svm,donr~.,data=data.train.std.c ,kernel ="radial",ranges =list(cost=c(0.001 , 0.01, 0.1, 1,5,10,100) ))
@@ -938,7 +940,7 @@ table(chat.valid.svm, c.valid) # classification table
 # 1487   11381   Tree with subset vars
 # 1308   11565   Boosted Tree
 # 1055   11099.5 RF
-# 1925   10534   Linear SVM (untuned)
+# 2013   10459.5 Linear SVM (untuned)
 # 1366   11536 Radial SVM (tuned)
 
 ##Logistic is the best!  Most profit.
