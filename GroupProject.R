@@ -1298,11 +1298,6 @@ lasso.coef= coef(lasso.mod,s=bestlam)
 #########################################
 # Save final results for both classification and regression
 
-length(chat.test) # check length = 2007
-length(yhat.test) # check length = 2007
-chat.test[1:10] # check this consists of 0s and 1s
-yhat.test[1:10] # check this consists of plausible predictions of damt
-
 class.model <- model.log1b_r1
 cutoff <- cutoff.log1b_r1 
 reg.model <- model.lin_cp
@@ -1314,6 +1309,6 @@ data.test.std$y.hat <- ifelse(data.test.std$c.hat.class == 1,predict(reg.model,d
 
 # n.valid post probs
 ip <- data.frame(chat=data.test.std$c.hat.class, yhat=data.test.std$y.hat) # data frame with two variables: chat and yhat
-write.csv(ip, file="BFSZ.csv", row.names=FALSE) # use your initials for the file name
+write.csv(ip, file="BFSZ_test_predictions.csv", row.names=FALSE) # use your initials for the file name
 
 # submit the csv file in Canvas for evaluation based on actual test donr and damt values
