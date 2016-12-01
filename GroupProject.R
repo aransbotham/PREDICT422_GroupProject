@@ -71,6 +71,7 @@ lapply(list.of.packages, require, character.only = TRUE)
 
 # Load the diabetes data
 data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
+colnames(data) <- gsub("X.","",colnames(data))
 
 #Explore the data -- how big is it, what types of variables included, distributions and missing values.
 dim(data)
