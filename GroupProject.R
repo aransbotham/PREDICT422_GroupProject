@@ -1302,7 +1302,7 @@ yhat.test[1:10] # check this consists of plausible predictions of damt
 
 class.model <- model.log1b_r1
 cutoff <- cutoff.log1b_r1 
-reg.model <- model.lin2.valid
+reg.model <- model.lin_cp
 
 data.test.std$c.hat.prob <- predict(class.model, data.test.std, type="response")
 data.test.std$c.hat.class <- ifelse(data.test.std$c.hat.prob > cutoff,1,0)
