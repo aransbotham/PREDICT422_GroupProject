@@ -1053,7 +1053,7 @@ MPE_bic # 1.527695
 StandardError_bic # 0.1596775
 
 #
-# Model using highest Adjusted R-squared is best.
+# Mallows' Cp is best because it's simpler.
 
 #########################################
 #    MODEL 2: Best Subset w/ k-fold cv  #
@@ -1171,7 +1171,8 @@ pls.fit = plsr(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
 
 summary(pls.fit)
 
-validationplot(pls.fit, val.type="MSEP", type = "b")
+par(mfrow =c(1,1))
+validationplot(pls.fit, val.type = "MSEP", type = "b", pch=20, col="black")
 # There is an drop in the graph at 3, with minimal reduction after.
 # The drop at 3 makes me think three components is enough.
 
