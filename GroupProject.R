@@ -420,7 +420,8 @@ summary(regfit.model1b.bwd)
 #   tlag        -0.550722   0.061013  -9.026  < 2e-16 ***
 #   agif         0.165199   0.108201   1.527    0.127    
 #   I(agif^2)   -0.003404   0.052503  -0.065    0.948    
-#Create another logistic model using the top variables from the backward subset selection results
+
+#Create another logistic model using the top variables from the backward subset selection results including some others.
 model.log1b_r1<-glm(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
                       I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
                     data.train.std.c, family=binomial("logit"))
