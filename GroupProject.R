@@ -34,7 +34,7 @@
 # DONR: Classification Response Variable (1 = Donor, 0 = Non-donor)
 # DAMT: Prediction Response Variable (Donation Amount in $).
 
-setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422_GroupProject")
+#setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422_GroupProject")
 
 set.seed(1)
 
@@ -70,8 +70,10 @@ if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = TRUE)
 
 # Load the charity data
-data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
-colnames(data) <- gsub("X.","",colnames(data))
+#data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
+#colnames(data) <- gsub("X.","",colnames(data))
+data <- read.csv(file.path("/Users/annie/Desktop/Northwestern/PREDICT_422/FinalProject","charity.csv"),sep=",",header=TRUE)
+attach(data)
 
 #Explore the data -- how big is it, what types of variables included, distributions and missing values.
 dim(data)
