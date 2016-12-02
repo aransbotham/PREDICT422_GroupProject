@@ -319,6 +319,20 @@ set.seed(1)
 model.log1a <- glm(donr ~ reg1 + reg2 + home + chld + hinc + wrat + incm + tgif + tdon + tlag,
                    data.train.std.c, family=binomial("logit"))
 
+# Coefficients:
+#   Estimate Std. Error z value Pr(>|z|)    
+#   (Intercept) -0.25846    0.05081  -5.087 3.65e-07 ***
+#   reg1         0.56375    0.05282  10.674  < 2e-16 ***
+#   reg2         1.20824    0.05948  20.313  < 2e-16 ***
+#   home         1.11618    0.06956  16.045  < 2e-16 ***
+#   chld        -1.95678    0.06760 -28.946  < 2e-16 ***
+#   hinc         0.09168    0.05188   1.767   0.0772 .  
+#   wrat         0.82571    0.05665  14.575  < 2e-16 ***
+#   incm         0.56317    0.05097  11.048  < 2e-16 ***
+#   tgif         0.51086    0.04945  10.331  < 2e-16 ***
+#   tdon        -0.23513    0.05068  -4.640 3.49e-06 ***
+#   tlag        -0.45569    0.05179  -8.800  < 2e-16 ***
+    
 post.valid.log1a <- predict(model.log1a, data.valid.std.c, type="response") # n.valid post probs
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
