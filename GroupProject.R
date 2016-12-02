@@ -34,7 +34,7 @@
 # DONR: Classification Response Variable (1 = Donor, 0 = Non-donor)
 # DAMT: Prediction Response Variable (Donation Amount in $).
 
-#setwd("/Users/asheets/Documents/Work_Computer/Grad_School/PREDICT_422/PREDICT422_GroupProject")
+# setwd("./PREDICT422_GroupProject")
 
 set.seed(1)
 
@@ -70,10 +70,8 @@ if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = TRUE)
 
 # Load the charity data
-#data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
-#colnames(data) <- gsub("X.","",colnames(data))
-data <- read.csv(file.path("/Users/annie/Desktop/Northwestern/PREDICT_422/FinalProject","charity.csv"),sep=",",header=TRUE)
-attach(data)
+data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
+colnames(data) <- gsub("X.","",colnames(data))
 
 #Explore the data -- how big is it, what types of variables included, distributions and missing values.
 dim(data)
@@ -318,7 +316,7 @@ table(chat.valid.log1, c.valid) # classification table
 
 #use only those variables found to be significant
 set.seed(1)
-model.log1a <- glm(donr ~ reg1 + reg3 + reg4 + home + chld + avhv + inca + plow + npro + lgif + agif,
+model.log1a <- glm(donr ~ reg1 + reg2 + home + chld + hinc + wrat + incm + tgif + tdon + tlag,
                    data.train.std.c, family=binomial("logit"))
 
 post.valid.log1a <- predict(model.log1a, data.valid.std.c, type="response") # n.valid post probs
@@ -329,17 +327,17 @@ profit.log1a <- cumsum(14.5*c.valid[order(post.valid.log1a, decreasing=T)]-2)
 plot(profit.log1a) # see how profits change as more mailings are made
 n.mail.valid1a <- which.max(profit.log1a) # number of mailings that maximizes profits
 c(n.mail.valid1a, max(profit.log1a)) # report number of mailings and maximum profit
-#[1]  1583 11073
+#[1]  1418.0 11359.5
 
 cutoff.log1a <- sort(post.valid.log1a, decreasing=T)[n.mail.valid1a+1] # set cutoff based on n.mail.valid
 chat.valid.log1a <- ifelse(post.valid.log1a>cutoff.log1a, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.log1a, c.valid) # classification table
 #                 c.valid
 #chat.valid.log1a   0   1
-#               0 418  17
-#               1 601 982
-#601+982=1583
-#14.5*982-2*1583=11073
+#               0 580  20
+#               1 439 979
+#439+979=1418
+#14.5*979-2*1418=11359.5
 
 #Resulting model is not more profitable than Full Model
 
@@ -951,7 +949,7 @@ table(chat.valid.svm, c.valid) # classification table
 
 # n.mail Profit  Model
 # 1397   11387   Log1
-# 1583   11073   Log 1a
+# 1418   11359.5   Log 1a
 # 1302.0 11649.5 Log 1b
 # 1396   11389   Log GAM1
 # 1302.0 11649.5 Log GAM1a
