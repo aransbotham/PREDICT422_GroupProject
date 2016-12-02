@@ -261,13 +261,36 @@ do.call("grid.arrange", c(plots3))
 #########################################################################################
 
 #########################################
-#    MODEL 1: Logistic: Full model      #
+#    Model 1: Logistic: Full model      #
 #########################################
 set.seed(1)
 model.log1 <- glm(donr ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf + wrat + 
                     avhv + incm + inca + plow + npro + tgif + lgif + rgif + tdon + tlag + agif, 
                   data.train.std.c, family=binomial("logit"))
-
+summary(model.log1)
+#Coefficients:
+#            Estimate Std. Error z value Pr(>|z|)    
+#(Intercept) -0.25937    0.05094  -5.091 3.55e-07 ***
+#reg1         0.56270    0.06215   9.055  < 2e-16 ***
+#reg2         1.21675    0.07067  17.218  < 2e-16 ***
+#reg3         0.01955    0.05704   0.343    0.732    
+#reg4        -0.01005    0.05831  -0.172    0.863    
+#home         1.12151    0.06977  16.075  < 2e-16 ***
+#chld        -1.96492    0.06792 -28.929  < 2e-16 ***
+#hinc         0.08908    0.05205   1.711    0.087 .  
+#genf        -0.02756    0.04861  -0.567    0.571    
+#wrat         0.82848    0.05680  14.585  < 2e-16 ***
+#avhv         0.07502    0.09381   0.800    0.424    
+#incm         0.47110    0.10205   4.616 3.90e-06 ***
+#inca         0.03096    0.11532   0.268    0.788    
+#plow        -0.01404    0.08736  -0.161    0.872    
+#npro         0.08815    0.10154   0.868    0.385    
+#tgif         0.44438    0.10203   4.355 1.33e-05 ***
+#lgif        -0.12339    0.10951  -1.127    0.260    
+#rgif        -0.02812    0.09521  -0.295    0.768    
+#tdon        -0.23472    0.05087  -4.614 3.95e-06 ***
+#tlag        -0.45686    0.05192  -8.800  < 2e-16 ***
+#agif         0.11207    0.08884   1.262    0.207
 
 post.valid.log1 <- predict(model.log1, data.valid.std.c, type="response") # n.valid post probs
 
