@@ -443,7 +443,7 @@ table(chat.valid.log1b_r1, c.valid) # classification table
 #                   0 670  14
 #                   1 349 985
 
-#20 variable logistic model (model.log1b_r1) is most profitable . 
+#Third variable logistic model (model.log1b_r1) is most profitable . 
 
 ##Log Odds
 exp(coef(model.log1b_r1))
