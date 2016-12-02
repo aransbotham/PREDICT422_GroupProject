@@ -389,8 +389,38 @@ regfit.model1b.bwd<-regsubsets(donr~ reg1 + reg2 + reg3 + reg4 + home + chld + h
                                + rgif + I(rgif^2) + tdon + tlag + agif + I(agif^2),data=data.train.std.c,nvmax=30,
                                method="backward")
 summary(regfit.model1b.bwd)
-
-#Create another logistic model using only the top 20 variables from the backward subset selection results
+# Coefficients:
+#   Estimate Std. Error z value Pr(>|z|)    
+# (Intercept)  0.959729   0.123786   7.753 8.97e-15 ***
+#   reg1         0.652047   0.073242   8.903  < 2e-16 ***
+#   reg2         1.487748   0.085567  17.387  < 2e-16 ***
+#   reg3        -0.022101   0.067176  -0.329    0.742    
+#   reg4        -0.003682   0.069357  -0.053    0.958    
+#   home         1.394705   0.085184  16.373  < 2e-16 ***
+#   chld        -2.408560   0.087505 -27.525  < 2e-16 ***
+#   hinc         0.096574   0.064432   1.499    0.134    
+#   I(hinc^2)   -1.104296   0.054592 -20.228  < 2e-16 ***
+#   genf        -0.087492   0.056545  -1.547    0.122    
+#   wrat         0.494881   0.099830   4.957 7.15e-07 ***
+#   I(wrat^2)   -0.420999   0.067400  -6.246 4.20e-10 ***
+#   avhv         0.037254   0.111960   0.333    0.739    
+#   incm         0.543719   0.123601   4.399 1.09e-05 ***
+#   I(incm^2)   -0.085314   0.065400  -1.305    0.192    
+#   inca         0.142263   0.142144   1.001    0.317    
+#   I(inca^2)    0.046776   0.059150   0.791    0.429    
+#   plow        -0.007275   0.121730  -0.060    0.952    
+#   npro         0.070515   0.123182   0.572    0.567    
+#   tgif         0.579599   0.129597   4.472 7.74e-06 ***
+#   I(tgif^2)   -0.063681   0.042320  -1.505    0.132    
+#   lgif        -0.144329   0.145780  -0.990    0.322    
+#   I(lgif^2)   -0.013032   0.050718  -0.257    0.797    
+#   rgif        -0.085898   0.111993  -0.767    0.443    
+#   I(rgif^2)    0.050228   0.056475   0.889    0.374    
+#   tdon        -0.310769   0.062374  -4.982 6.28e-07 ***
+#   tlag        -0.550722   0.061013  -9.026  < 2e-16 ***
+#   agif         0.165199   0.108201   1.527    0.127    
+#   I(agif^2)   -0.003404   0.052503  -0.065    0.948    
+#Create another logistic model using the top variables from the backward subset selection results
 model.log1b_r1<-glm(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
                       I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
                     data.train.std.c, family=binomial("logit"))
