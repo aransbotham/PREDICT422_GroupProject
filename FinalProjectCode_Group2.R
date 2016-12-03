@@ -587,6 +587,13 @@ table(chat.valid.lda1, c.valid) # classification table
 # check n.mail.valid = 419 + 976 = 1395
 # check profit = 14.5*976-2*1395 = 11362
 
+# calculate accuracy
+confusion.matrix <- table(chat.valid.lda1, c.valid)
+sum(diag(confusion.matrix))/sum(confusion.matrix) #overall accuracy
+# 0.7809713
+1-sum(diag(confusion.matrix))/sum(confusion.matrix) #incorrect classification 
+# 0.2190287   
+
 #########################################
 #    MODEL 3a: LDA with subset of vars  #
 #########################################
@@ -620,6 +627,13 @@ table(chat.valid.lda3a, c.valid)
 #14.5*991-2*1361=11647.5
 
 #Model 3 marginally more profitable than Model 3a
+
+# calculate accuracy
+confusion.matrix <- table(chat.valid.lda3a, c.valid)
+sum(diag(confusion.matrix))/sum(confusion.matrix) #overall accuracy
+# 0.8126858
+1-sum(diag(confusion.matrix))/sum(confusion.matrix) #incorrect classification 
+# 0.1873142
 
 ##Plot LDA?
 # png("./plots", width=10000, height=10000, pointsize=12)
