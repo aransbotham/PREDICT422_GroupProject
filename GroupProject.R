@@ -1347,7 +1347,7 @@ lasso.coef= coef(lasso.mod,s=bestlam)
 # Save final results for both classification and regression
 
 class.model <- model.gam2a
-cutoff <- cutoff.log1b_r1 
+cutoff <- cutoff.gam2a
 reg.model <- model.lin_cp
 
 data.test.std$c.hat.prob <- predict(class.model, data.test.std, type="response")
