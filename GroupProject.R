@@ -318,7 +318,7 @@ table(chat.valid.log1, c.valid) # classification table
 set.seed(1)
 model.log1a <- glm(donr ~ reg1 + reg2 + home + chld + hinc + wrat + incm + tgif + tdon + tlag,
                    data.train.std.c, family=binomial("logit"))
-
+summary(model.log1a)
 # Coefficients:
 #   Estimate Std. Error z value Pr(>|z|)    
 #   (Intercept) -0.25846    0.05081  -5.087 3.65e-07 ***
@@ -493,11 +493,29 @@ table(chat.valid.gam1, c.valid) # classification table
 ##########################################
 #    MODEL 2a: Logistic GAM w/ best vars #
 ##########################################
-
+set.seed(1)
 #Run logistic GAM model with 20 variables from best subset selection in previous section
 model.gam2a=gam(donr~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
                   I(tgif^2) + lgif + tdon + tlag + agif, family=binomial,
                 data=data.train.std.c)
+
+summary(model.gam2a)
+#  Df Sum Sq Mean Sq  F value    Pr(>F)    
+#   reg1         1    1.0   1.042   1.2722   0.25942    
+#   reg2         1   20.7  20.720  25.3016 5.120e-07 ***
+#   home         1   22.6  22.631  27.6348 1.542e-07 ***
+#   chld         1  263.0 263.018 321.1727 < 2.2e-16 ***
+#   I(hinc^2)    1  188.5 188.500 230.1781 < 2.2e-16 ***
+#   wrat         1  106.2 106.173 129.6477 < 2.2e-16 ***
+#   I(wrat^2)    1   23.1  23.111  28.2214 1.141e-07 ***
+#   incm         1   94.8  94.799 115.7590 < 2.2e-16 ***
+#   tgif         1   88.4  88.375 107.9144 < 2.2e-16 ***
+#   I(tgif^2)    1    2.4   2.399   2.9289   0.08709 .  
+#   lgif         1    3.2   3.175   3.8775   0.04901 *  
+#   tdon         1   19.6  19.632  23.9728 1.016e-06 ***
+#   tlag         1   83.1  83.122 101.5002 < 2.2e-16 ***
+#   agif         1    2.3   2.295   2.8026   0.09419 .  
+ 
 post.valid.gam2a <- predict(model.gam2a, data.valid.std.c, type="response") # n.valid post probs
 
 # calculate ordered profit function using average donation = $14.50 and mailing cost = $2
@@ -1328,7 +1346,7 @@ lasso.coef= coef(lasso.mod,s=bestlam)
 #########################################
 # Save final results for both classification and regression
 
-class.model <- model.log1b_r1
+class.model <- model.gam2a
 cutoff <- cutoff.log1b_r1 
 reg.model <- model.lin_cp
 
