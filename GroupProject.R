@@ -70,8 +70,8 @@ if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only = TRUE)
 
 # Load the charity data
-data <- read.csv(file="charity.csv",stringsAsFactors=FALSE,header=TRUE,quote="",comment.char="")
-colnames(data) <- gsub("X.","",colnames(data))
+data <- read.csv(file="charity.csv")
+# colnames(data) <- gsub("X.","",colnames(data))
 
 #Explore the data -- how big is it, what types of variables included, distributions and missing values.
 dim(data)
