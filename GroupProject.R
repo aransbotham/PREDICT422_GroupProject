@@ -389,50 +389,33 @@ regfit.model1b.bwd<-regsubsets(donr~ reg1 + reg2 + reg3 + reg4 + home + chld + h
                                + rgif + I(rgif^2) + tdon + tlag + agif + I(agif^2),data=data.train.std.c,nvmax=30,
                                method="backward")
 summary(regfit.model1b.bwd)
-# Coefficients:
-#   Estimate Std. Error z value Pr(>|z|)    
-# (Intercept)  0.959729   0.123786   7.753 8.97e-15 ***
-#   reg1         0.652047   0.073242   8.903  < 2e-16 ***
-#   reg2         1.487748   0.085567  17.387  < 2e-16 ***
-#   reg3        -0.022101   0.067176  -0.329    0.742    
-#   reg4        -0.003682   0.069357  -0.053    0.958    
-#   home         1.394705   0.085184  16.373  < 2e-16 ***
-#   chld        -2.408560   0.087505 -27.525  < 2e-16 ***
-#   hinc         0.096574   0.064432   1.499    0.134    
-#   I(hinc^2)   -1.104296   0.054592 -20.228  < 2e-16 ***
-#   genf        -0.087492   0.056545  -1.547    0.122    
-#   wrat         0.494881   0.099830   4.957 7.15e-07 ***
-#   I(wrat^2)   -0.420999   0.067400  -6.246 4.20e-10 ***
-#   avhv         0.037254   0.111960   0.333    0.739    
-#   incm         0.543719   0.123601   4.399 1.09e-05 ***
-#   I(incm^2)   -0.085314   0.065400  -1.305    0.192    
-#   inca         0.142263   0.142144   1.001    0.317    
-#   I(inca^2)    0.046776   0.059150   0.791    0.429    
-#   plow        -0.007275   0.121730  -0.060    0.952    
-#   npro         0.070515   0.123182   0.572    0.567    
-#   tgif         0.579599   0.129597   4.472 7.74e-06 ***
-#   I(tgif^2)   -0.063681   0.042320  -1.505    0.132    
-#   lgif        -0.144329   0.145780  -0.990    0.322    
-#   I(lgif^2)   -0.013032   0.050718  -0.257    0.797    
-#   rgif        -0.085898   0.111993  -0.767    0.443    
-#   I(rgif^2)    0.050228   0.056475   0.889    0.374    
-#   tdon        -0.310769   0.062374  -4.982 6.28e-07 ***
-#   tlag        -0.550722   0.061013  -9.026  < 2e-16 ***
-#   agif         0.165199   0.108201   1.527    0.127    
-#   I(agif^2)   -0.003404   0.052503  -0.065    0.948    
 
 #Create another logistic model using the top variables from the backward subset selection results including some others.
-model.log1b_r1<-glm(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
-                      I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
+#14
+model.log1b_r1<-glm(donr~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                      I(tgif^2) + lgif + tdon + tlag + agif,
+                    data.train.std.c, family=binomial("logit"))
+#15
+model.log1b_r2<-glm(donr~ reg1 + reg2 + home + chld + hinc + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                      I(tgif^2) + lgif + tdon + tlag + agif,
+                    data.train.std.c, family=binomial("logit"))
+#13
+model.log1b_r3<-glm(donr~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                       lgif + tdon + tlag + agif,
                     data.train.std.c, family=binomial("logit"))
 
 post.valid.log1b_r1 <- predict(model.log1b_r1, data.valid.std.c, type="response") # n.valid post probs
+# post.valid.log1b_r1 <- predict(model.log1b_r2, data.valid.std.c, type="response") # n.valid post probs
+# post.valid.log1b_r1 <- predict(model.log1b_r3, data.valid.std.c, type="response") # n.valid post probs
+
 
 profit.log1b_r1 <- cumsum(14.5*c.valid[order(post.valid.log1b_r1, decreasing=T)]-2)
 plot(profit.log1b_r1) # see how profits change as more mailings are made
 n.mail.valid1b_r1 <- which.max(profit.log1b_r1) # number of mailings that maximizes profits
 c(n.mail.valid1b_r1, max(profit.log1b_r1)) # report number of mailings and maximum profit
-#[1]  1302.0 11649.5
+# r1: [1]  1329 11668
+# r2: [1]  1317.0 11648.5
+# r3: [1]  1337 11652
 
 cutoff.log1b_r1 <- sort(post.valid.log1b_r1, decreasing=T)[n.mail.valid1b_r1+1] # set cutoff based on n.mail.valid
 chat.valid.log1b_r1 <- ifelse(post.valid.log1b_r1>cutoff.log1b, 1, 0) # mail to everyone above the cutoff
@@ -440,20 +423,21 @@ table(chat.valid.log1b_r1, c.valid) # classification table
 
 #                     c.valid
 # chat.valid.log1b_r1   0   1
-#                   0 670  14
-#                   1 349 985
+#                   0 672  11
+#                   1 347 988
+
+#341+988=1329
+#14.5*988-2*1329=11668
 
 #Third variable logistic model (model.log1b_r1) is most profitable . 
 
 ##Log Odds
-exp(coef(model.log1b_r1))
-# (Intercept)        reg1        reg2        home        chld   I(hinc^2)        genf        wrat   I(wrat^2) 
-# 2.50563242  1.92965236  4.47780623  4.01570777  0.09033011  0.33427699  0.91727758  1.63353273  0.65764229 
-# incm        inca   I(inca^2)        plow        tgif   I(tgif^2)        lgif   I(rgif^2)        tdon 
-# 1.71730390  1.12595586  1.00213206  0.93293112  1.89711195  0.93196868  0.79267906  1.03948266  0.73711746 
-# tlag        agif 
-# 0.57772531  1.17439419 
-exp(cbind(OR = coef(model.log1b_r1), confint(model.log1b_r1)))
+# exp(coef(model.log1b_r1))
+# (Intercept)        reg1        reg2        home        chld   I(hinc^2)        wrat   I(wrat^2)        incm 
+# 2.6012968   1.9381568   4.4633608   3.9961222   0.0911811   0.3354689   1.6301754   0.6562579   1.9987167 
+# tgif   I(tgif^2)        lgif        tdon        tlag        agif 
+# 1.8945382   0.9330249   0.8069087   0.7396435   0.5768598   1.1633677 
+# exp(cbind(OR = coef(model.log1b_r1), confint(model.log1b_r1)))
 
 #Odds Ratio
 #               OR        2.5 %     97.5 %
@@ -511,8 +495,8 @@ table(chat.valid.gam1, c.valid) # classification table
 ##########################################
 
 #Run logistic GAM model with 20 variables from best subset selection in previous section
-model.gam2a=gam(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
-                  I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif, family=binomial,
+model.gam2a=gam(donr~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                  I(tgif^2) + lgif + tdon + tlag + agif, family=binomial,
                 data=data.train.std.c)
 post.valid.gam2a <- predict(model.gam2a, data.valid.std.c, type="response") # n.valid post probs
 
@@ -522,16 +506,16 @@ profit.gam2a <- cumsum(14.5*c.valid[order(post.valid.gam2a, decreasing=T)]-2)
 plot(profit.gam2a) # see how profits change as more mailings are made
 n.mail.valid2a <- which.max(profit.gam2a) # number of mailings that maximizes profits
 c(n.mail.valid2a, max(profit.gam2a)) # report number of mailings and maximum profit
-# 1302.0 11649.5
+# 1329 11668
 cutoff.gam2a <- sort(post.valid.gam2a, decreasing=T)[n.mail.valid2a+1] # set cutoff based on n.mail.valid
 chat.valid.gam2a <- ifelse(post.valid.gam2a>cutoff.gam2a, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.gam2a, c.valid)
-#                 c.valid
-#chat.valid.gam2a   0   1
-#               0 700  16
-#               1 319 983
-#319+983=1302
-#14.5*983-2*1302=11649.5
+#                  c.valid
+# chat.valid.gam2a   0   1
+#                0 678  11
+#                1 341 988
+#341+988=1329
+#14.5*988-2*1329=11668
 
 #Model model.gam2a more profitable
 
@@ -571,8 +555,8 @@ table(chat.valid.lda1, c.valid) # classification table
 #    MODEL 3a: LDA with subset of vars  #
 #########################################
 #Run another LDA model with 20 best subset selection variables from first section
-model.lda3a <- lda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
-                     I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif, 
+model.lda3a <- lda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                     I(tgif^2) + lgif + tdon + tlag + agif, 
                    data.train.std.c) # include additional terms on the fly using I()
 
 # Note: strictly speaking, LDA should not be used with qualitative predictors,
@@ -586,17 +570,17 @@ profit.lda3a <- cumsum(14.5*c.valid[order(post.valid.lda3a, decreasing=T)]-2)
 plot(profit.lda3a) # see how profits change as more mailings are made
 n.mail.valid3a <- which.max(profit.lda3a) # number of mailings that maximizes profits
 c(n.mail.valid3a, max(profit.lda3a)) # report number of mailings and maximum profit
-# 1336.0 11639.5
+# 1361.0 11647.5
 
 cutoff.lda3a <- sort(post.valid.lda3a, decreasing=T)[n.mail.valid3a+1] # set cutoff based on n.mail.valid
 chat.valid.lda3a <- ifelse(post.valid.lda3a>cutoff.lda3a, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.lda3a, c.valid)
-#                 c.valid
-#chat.valid.lda3a   0   1
-#               0 670  12
-#               1 349 987
-#349+987=1336
-#14.5*987-2*1336=11639.5
+#                  c.valid
+# chat.valid.lda3a   0   1
+#                0 649   8
+#                1 370 991
+#370+991=1361
+#14.5*991-2*1361=11647.5
 
 #Model 3 marginally more profitable than Model 3a
 
@@ -638,8 +622,8 @@ table(chat.valid.qda1, c.valid) # classification table
 #    MODEL 4: QDA with subset of vars   #
 #########################################
 set.seed(1)
-model.qda4a =qda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
-                   I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif,
+model.qda4a =qda(donr~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                   I(tgif^2) + lgif + tdon + tlag + agif,
                  data= data.train.std.c)
 
 # Note: strictly speaking, LDA should not be used with qualitative predictors,
@@ -653,17 +637,17 @@ profit.qda4a <- cumsum(14.5*c.valid[order(post.valid.qda4a, decreasing=T)]-2)
 plot(profit.qda4a) # see how profits change as more mailings are made
 n.mail.valid4a <- which.max(profit.qda4a) # number of mailings that maximizes profits
 c(n.mail.valid4a, max(profit.qda4a)) # report number of mailings and maximum profit
-# 1421 11107
+# 1430.0 11074.5
 
 cutoff.qda4a <- sort(post.valid.qda4a, decreasing=T)[n.mail.valid4a+1] # set cutoff based on n.mail.valid
 chat.valid.qda4a <- ifelse(post.valid.qda4a>cutoff.qda4a, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.qda4a, c.valid) # classification table
 #               c.valid
 #chat.valid.qda4a   0   1
-#               0 560  37
-#               1 459 962
-#459+962=1421
-#14.5*964-2*1421=11136
+#               0 550  38
+#               1 469 961
+#469+961=1430
+#14.5*961-2*1430=11074.5
 
 #Model 4a performed significantly worse than Model 4.
 
@@ -816,9 +800,8 @@ table(chat.valid.tree1, c.valid) # classification table
 #    MODEL 6a: DECISION TREE w/ subset  #
 #########################################
 set.seed(1)
-model.tree2 <- tree(as.factor(donr) ~ reg1 + reg2 + home + chld + I(hinc^2) + genf + wrat + I(wrat^2) + incm + inca + 
-                      I(inca^2) + plow + tgif + I(tgif^2) + lgif + I(rgif^2) + tdon + tlag + agif
-                    ,data=data.train.std.c)
+model.tree2 <- tree(as.factor(donr) ~ reg1 + reg2 + home + chld + I(hinc^2) + wrat + I(wrat^2) + incm + tgif + 
+                      I(tgif^2) + lgif + tdon + tlag + agif,data=data.train.std.c)
 plot(model.tree2)
 text(model.tree2)
 
@@ -994,14 +977,14 @@ table(chat.valid.svm, c.valid) # classification table
 
 # n.mail Profit  Model
 # 1397   11387   Log1
-# 1418   11359.5   Log 1a
-# 1302.0 11649.5 Log 1b
+# 1418   11359.5 Log 1a
+# 1329   11668   Log 1b
 # 1396   11389   Log GAM1
-# 1302.0 11649.5 Log GAM1a
+# 1329   11668   Log GAM1a
 # 1363   11642.5 LDA1
-# 1336.0 11639.5 LDA1a
+# 1361.0 11647.5 LDA1a
 # 1396.0 11229.5 QDA
-# 1421   11107   QDA1a
+# 1430.0 11074.5 QDA1a
 # 1116   9875.5  KNN
 # 1250   11130   KNN1a
 # 1390   11299.5 KNN1b
