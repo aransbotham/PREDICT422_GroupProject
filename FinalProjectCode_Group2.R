@@ -1026,17 +1026,17 @@ table(chat.valid.svm, c.valid) # classification table
 # 1329   11668   Log 1b
 # 1396   11389   Log GAM1
 # 1329   11668   Log GAM1a
-# 1363   11642.5 LDA1
+# 1395   11362   LDA1
 # 1361.0 11647.5 LDA1a
-# 1396.0 11229.5 QDA
+# 1379.0 11263.5 QDA
 # 1430.0 11074.5 QDA1a
 # 1116   9875.5  KNN
 # 1250   11130   KNN1a
 # 1390   11299.5 KNN1b
 # 1362   11413.5 Unaltered Tree & Pruned Tree
-# 1487   11381   Tree with subset vars
-# 1308   11565   Boosted Tree
-# 1055   11099.5 RF
+# 1373   11333.5   Tree with subset vars
+# 1344   11594.5   Boosted Tree
+# 1040   11028 RF
 # 2013   10459.5 Linear SVM (untuned)
 # 1366   11536 Radial SVM (tuned)
 
