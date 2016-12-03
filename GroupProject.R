@@ -456,7 +456,7 @@ table(chat.valid.log1b_r1, c.valid) # classification table
 # (Intercept)        reg1        reg2        home        chld   I(hinc^2)        wrat   I(wrat^2)        incm 
 # 2.6012968   1.9381568   4.4633608   3.9961222   0.0911811   0.3354689   1.6301754   0.6562579   1.9987167 
 # tgif   I(tgif^2)        lgif        tdon        tlag        agif 
-# 1.8945382   0.9330249   0.8069087   0.7396435   0.5768598   1.1633677 
+# 1.8945382   0.9330249   0.8069087   0.7396435   0.5768598   1.1633677
 # exp(cbind(OR = coef(model.log1b_r1), confint(model.log1b_r1)))
 
 #########################################
