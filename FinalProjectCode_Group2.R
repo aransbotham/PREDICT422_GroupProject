@@ -488,14 +488,14 @@ c(n.mail.valid1, max(profit.gam1)) # report number of mailings and maximum profi
 # 1396 11389
 
 cutoff.gam1 <- sort(post.valid.gam1, decreasing=T)[n.mail.valid1+1] # set cutoff based on n.mail.valid
-chat.valid.gam1 <- ifelse(post.valid.gam1>cutoff.log1, 1, 0) # mail to everyone above the cutoff
+chat.valid.gam1 <- ifelse(post.valid.gam1 > cutoff.gam1, 1, 0) # mail to everyone above the cutoff
 table(chat.valid.gam1, c.valid) # classification table
 #                 c.valid
 # chat.valid.gam1   0   1
 #               0 597  21
 # 1               422 978
-# check n.mail.valid = 422+978 = 1400
-# check profit = 14.5*978-2*1400 = 11381 # This doesn't equal 11389...
+# check n.mail.valid = 418+978 = 1396
+# check profit = 14.5*978-2*1396 = 11389 # This doesn't equal 11389...
 
 ##########################################
 #    MODEL 2a: Logistic GAM w/ best vars #
