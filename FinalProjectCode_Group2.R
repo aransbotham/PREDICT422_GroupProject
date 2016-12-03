@@ -492,8 +492,8 @@ chat.valid.gam1 <- ifelse(post.valid.gam1 > cutoff.gam1, 1, 0) # mail to everyon
 table(chat.valid.gam1, c.valid) # classification table
 #                 c.valid
 # chat.valid.gam1   0   1
-#               0 597  21
-# 1               422 978
+#               0 601  21
+#               1 418 978
 # check n.mail.valid = 418+978 = 1396
 # check profit = 14.5*978-2*1396 = 11389 # This doesn't equal 11389...
 
