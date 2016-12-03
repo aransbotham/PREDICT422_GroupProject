@@ -1036,20 +1036,14 @@ model.lin2 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf +
                  data.train.std.y)
 summary(model.lin2)
 
-# Run model on validation set.
-model.lin2.valid <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + genf +
-                         incm + plow + tgif + lgif + rgif + tdon + agif,
-                       data.valid.std.y)
-summary(model.lin2.valid)
-
 # Make predictions for validation set based on model.
-pred.valid.lin2 <- predict(model.lin2.valid, data.valid.std.y)
+pred.lin2 <- predict(model.lin2, data.valid.std.y)
 
-MPE_adjR <- mean((y.valid - pred.valid.lin2)^2)
-StandardError_adjR <- sd((y.valid - pred.valid.lin2)^2)/sqrt(n.valid.y)
+MPE_adjR <- mean((y.valid - pred.lin2)^2)
+StandardError_adjR <- sd((y.valid - pred.lin2)^2)/sqrt(n.valid.y)
 
-MPE_adjR # 1.50811
-StandardError_adjR # 0.1570488
+MPE_adjR #  1.558254
+StandardError_adjR # 0.1608325
 
 #### Now for the model with lowest cp. 
 coef(regfit.full, 14)
@@ -1058,20 +1052,14 @@ model.lin_cp <- lm(damt ~ reg2 + reg3 + reg4 + home + chld + hinc + genf +
                    data.train.std.y)
 summary(model.lin_cp)
 
-# Run model on validation set.
-model.lin_cp.valid <- lm(damt ~ reg2 + reg3 + reg4 + home + chld + hinc + genf +
-                           incm + plow + tgif + lgif + rgif + tdon + agif,
-                         data.valid.std.y)
-summary(model.lin_cp.valid)
-
 # Make predictions for validation set based on model.
-pred.valid.lin_cp <- predict(model.lin_cp.valid, data.valid.std.y)
+pred.lin_cp <- predict(model.lin_cp, data.valid.std.y)
 
-MPE_cp <- mean((y.valid - pred.valid.lin_cp)^2)
-StandardError_cp <- sd((y.valid - pred.valid.lin_cp)^2)/sqrt(n.valid.y)
+MPE_cp <- mean((y.valid - pred.lin_cp)^2)
+StandardError_cp <- sd((y.valid - pred.lin_cp)^2)/sqrt(n.valid.y)
 
-MPE_cp # 1.50853
-StandardError_cp # 0.1568465
+MPE_cp # 1.558577
+StandardError_cp # 0.1606044
 
 #### Now for the model with the lowest bic
 coef(regfit.full, 11)
@@ -1080,20 +1068,16 @@ model.lin_bic <- lm(damt ~ reg3 + reg4 + home + chld + hinc +
                     data.train.std.y)
 summary(model.lin_bic)
 
-# Run model on validation set.
-model.lin_bic.valid <- lm(damt ~ reg3 + reg4 + home + chld + hinc +
-                            incm + plow + tgif + lgif + rgif + agif,
-                          data.valid.std.y)
-summary(model.lin_bic.valid)
-
 # Make predictions for validation set based on model.
-pred.valid.lin_bic <- predict(model.lin_bic.valid, data.valid.std.y)
+pred.lin_bic <- predict(model.lin_bic, data.valid.std.y)
 
-MPE_bic <- mean((y.valid - pred.valid.lin_bic)^2)
-StandardError_bic <- sd((y.valid - pred.valid.lin_bic)^2)/sqrt(n.valid.y)
+MPE_bic <- mean((y.valid - pred.lin_bic)^2)
+StandardError_bic <- sd((y.valid - pred.lin_bic)^2)/sqrt(n.valid.y)
 
-MPE_bic # 1.527695
-StandardError_bic # 0.1596775
+MPE_bic
+# [1] 1.56297
+StandardError_bic
+# [1] 0.1604673
 
 
 ##
@@ -1118,14 +1102,14 @@ regfit.best <- regsubsets(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc 
                             lgif + rgif + tdon + tlag + agif, data.train.std.y, nvmax = 20)
 
 set.seed(1)
-test.mat = model.matrix(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
+validation.matrix = model.matrix(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc +
                           wrat + genf + avhv + incm + inca + plow + npro + tgif +
                           lgif + rgif + tdon + tlag + agif, data.valid.std.y)
 
 val.errors <- rep(NA,20)
 for (i in 1:20) {
   coefi = coef(regfit.best, id=i)
-  pred = test.mat[,names(coefi)]%*%coefi
+  pred = validation.matrix[,names(coefi)]%*%coefi
   val.errors[i] = mean((y.valid - pred)^2)}
 val.errors
 which.min(val.errors) # 18
@@ -1141,14 +1125,8 @@ model.lin4 <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + wrat +
                  data.train.std.y)
 summary(model.lin4)
 
-# Run model on validation set.
-model.lin4.valid <- lm(damt ~ reg1 + reg2 + reg3 + reg4 + home + chld + hinc + wrat +
-                         genf + incm + inca + plow + tgif + lgif + rgif + tdon + tlag + agif, 
-                       data.valid.std.y)
-summary(model.lin4.valid)
-
 # Make predictions for validation set based on model.
-pred.valid.lin4 <- predict(model.lin4, data.valid.std.y)
+pred.lin4 <- predict(model.lin4, data.valid.std.y)
 MPE4 <- mean((y.valid - pred.valid.lin4)^2)
 StandardError4 <- sd((y.valid - pred.valid.lin4)^2)/sqrt(n.valid.y)
 MPE4 # 1.555443
