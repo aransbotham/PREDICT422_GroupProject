@@ -495,7 +495,7 @@ table(chat.valid.gam1, c.valid) # classification table
 #               0 601  21
 #               1 418 978
 # check n.mail.valid = 418+978 = 1396
-# check profit = 14.5*978-2*1396 = 11389 # This doesn't equal 11389...
+# check profit = 14.5*978-2*1396 = 11389 
 
 ##########################################
 #    MODEL 2a: Logistic GAM w/ best vars #
